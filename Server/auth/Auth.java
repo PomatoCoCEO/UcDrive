@@ -13,11 +13,10 @@ import java.util.TreeSet;
 import java.util.stream.Stream;
 
 public class Auth {
-    TreeSet<User> users;
+    private TreeSet<User> users;
     public void loadUsers(String fileName) throws IOException {
         File fr = new File(fileName);
         try (Scanner sc = new Scanner(fr)) {
-            // BufferedReader br = new BufferedReader(fr);
             while(sc.hasNextLine()) {
                 String line = sc.nextLine();
                 String [] sp = line.split(" ");
@@ -30,10 +29,41 @@ public class Auth {
         }
     }
 
+    public enum Operation {
+        DELETE, CHANGE, ADD
+    }
+
+    public synchronized void changeUsers(Operation op, User user) {
+        User aid;
+        switch(op) {
+            case DELETE:
+                users.delete(user);
+                break;
+            case CHANGE:
+                aid = users.ceiling(new User(user.username, "", ""));
+                if(aid.username.equals(user.username)){
+                    users.delete(aid);
+                    users.add(user);
+                }
+                break;
+            case ADD:
+                // verify if user with that username already exists
+                aid = users.ceiling(new User(user.username, "", ""));
+                if(aid.username.equals(user.username)){
+                    users.delete(aid);
+                    users.add(user);
+                }
+                // else throw an exception
+                break;
+        }
+    }
+
     public void registerUser(String username, String password) {
         //! falta obter a hash da password
         User user = new User(username, password, "");
-        users.add(user);
+        synchronized(users) {
+            users.add(user);
+        }
     }
 
     public Auth(String fileName) throws IOException{
