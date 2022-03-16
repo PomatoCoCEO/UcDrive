@@ -28,7 +28,7 @@ public class Credentials implements Serializable{
     }
 
     public String loginString() {
-        return "LOGIN USER "+username+" PASSWORD "+password;
+        return "LOGIN\n"+username+"\n"+password;
     }
 
     @Override

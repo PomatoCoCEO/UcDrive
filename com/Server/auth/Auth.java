@@ -66,12 +66,18 @@ public class Auth {
         loadUsers(fileName);
     }
 
-    public String authenticate(String username, String password) throws Exception {
+    public User authenticate(String username, String password) throws Exception {
         User found = users.ceiling(new User(username, "", ""));
         if (!found.getUsername().equals(username) || !found.getPasswordHash().equals(password)) {
             throw new Exception("Authentication failed: user " + found);
         }
-        return "Yay";
+        //! need to calculate token here !!
+        // users.remove(found);
+        // found.setToken(username);
+        // users.add(found);
+        found.setToken(username);
+        changeUsers(Operation.CHANGE, found); // updates the information in the set, based on the username
+        return found;
     }
 
     public static void main(String[] args) {

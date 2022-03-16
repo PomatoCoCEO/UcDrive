@@ -33,8 +33,6 @@ public class Request implements Serializable{
         this.message = message;
     }
 
-    
-
     @Override
     public String toString() {
         return "Auth [message=" + message + "]";

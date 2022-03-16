@@ -4,11 +4,13 @@ public class User implements Comparable {
     private String username;
     private String passwordHash;
     private String lastDir;
+    private String token;
 
     public User(String username, String passwordHash, String lastDir) {
         this.username = username;
         this.passwordHash = passwordHash;
         this.lastDir = lastDir;
+        this.token="";
     }
 
     public String getUsername() {
@@ -35,6 +37,13 @@ public class User implements Comparable {
         this.lastDir = lastDir;
     }
 
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
     @Override
     public String toString() {
         return username + " " + passwordHash + " " + lastDir;

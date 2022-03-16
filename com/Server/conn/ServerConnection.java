@@ -16,6 +16,7 @@ public class ServerConnection extends Thread {
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Auth auth;
+    private User user;
 
     public ServerConnection(Socket socket, Auth auth) throws IOException {
         this.socket = socket;
@@ -23,9 +24,9 @@ public class ServerConnection extends Thread {
         in = new ObjectInputStream(socket.getInputStream());
         out = new ObjectOutputStream(socket.getOutputStream());
         this.start();
-    }
+    } 
 
-    public void run() {
+    public boolean login() {
         String response;
         Request request;
         Reply reply;
@@ -33,14 +34,22 @@ public class ServerConnection extends Thread {
         while (!authenticated) {
             try {
                 request = (Request) in.readObject();
-                String[] sp = request.getMessage().split(" ");
-                auth.authenticate(sp[2], sp[4]);
+                /* this is a simple way to ensure the message is read correctly.
+                 * \n's cannot be read in the console
+                 */
+                String[] sp = request.getMessage().split("\n"); 
+                if(!sp[0].equals("LOGIN")) {
+                    throw new Exception("Invalid command")
+                }
+                this.user = auth.authenticate(sp[1], sp[2]);
                 authenticated = true;
-                reply = new Reply(sp[2], "OK");
+                reply = new Reply(sp[1]+"\n"+this.user.getLastDir(), "OK"); 
+                // sends a token (to be implemented) and the last working directory
                 out.writeObject(reply);
-            } catch (EOFException e) {
+                return true;
+            } catch (EOFException e) { // happens when socket is closed on the other side
                 System.out.println("EOF:" + e);
-                return;
+                return false;
             } catch (Exception e) {
 
                 System.err.println("No authentication was possible");
@@ -50,19 +59,33 @@ public class ServerConnection extends Thread {
                 } catch (IOException io) {
                     io.printStackTrace();
                 }
-                return;
-                //
             }
             // determine a suitable token
         }
+        return true;    
+    }
+
+    
+    public void run() {
+        
+        
+        if(!login()) return;    
+
         System.out.println("Authentication successful! Let us continue!");
         while (true)
 
         {
             try {
                 // handle request
-                request = (Request) in.readObject();
+                Request request = (Request) in.readObject();
                 System.out.println("Request: \"" + request + "\"");
+                if(!request.getToken().equals(this.user.getToken())) {
+                    //! bad things are happening
+                    reply = new Reply("Wrong authentication", "Unauthorized");
+                    out.writeObject(reply);
+                    throw new Exception("Invalid auth token for user "+user.)
+                }
+                handleRequest(request);
                 // and send response
             } catch (EOFException e) {
                 System.out.println("EOF:" + e);
@@ -76,4 +99,10 @@ public class ServerConnection extends Thread {
             }
         }
     }
+
+    public Auth getAuth() {
+        return auth;
+    }
+
+    public 
 }
