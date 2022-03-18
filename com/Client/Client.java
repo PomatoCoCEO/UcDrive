@@ -2,6 +2,10 @@ package com.Client;
 
 import com.DataTransfer.Reply;
 import com.DataTransfer.Request;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import java.io.*;
 import java.net.*;
@@ -15,124 +19,196 @@ public class Client {
     public static ObjectInputStream in;
     private static String token;
     private static String serverDir;
+    private static String clientDir;
 
-    public static void login(){
+    public static void login(BufferedReader commandReader) {
         while (true) {
-                System.out.println("Enter username:");
-                String username = commandReader.readLine();
-                System.out.println("Enter password:");
-                String password = commandReader.readLine();
-                Credentials cred = new Credentials(username, password);
-                Request login = new Request(cred.loginString());
+            try {
+                Reply reply;
+                Request login;
+                boolean first = true;
+                do {
+                    if (!first)
+                        System.out.println("Try again");
+                    first = false;
+                    System.out.println("Enter username:");
+                    String username = commandReader.readLine();
+                    System.out.println("Enter password:");
+                    Console c = System.console();
+                    String password = new String(c.readPassword());// commandReader.readLine();
+                    Credentials cred = new Credentials(username, password);
+                    login = new Request(cred.loginString());
+
+                    reply = (Reply) in.readObject();
+                } while (reply.getStatusCode().equals("OK"));
 
                 out.writeObject(login);
                 out.flush();
-                
-                Reply reply = (Reply) in.readObject();
-                switch(reply.getStatusCode()) {
+                reply = (Reply) in.readObject();
+                switch (reply.getStatusCode()) {
                     case "OK":
-                        System.out.println("Login successful");
-                        this.token = reply.message;
-                        break;
+                        System.out.println("Login successful " + reply.getMessage());
+                        String server_data = reply.getMessage();
+                        String[] data = server_data.split("\n");
+                        token = data[0];
+                        serverDir = data[1];
+                        clientDir = data[2];
+                        return;
                     case "Unauthorized":
                         System.out.println("Wrong username or password");
+                        break;
                     default:
-                        System.out.println("Login failed");                    
+                        System.out.println("Login failed");
                 }
+            } catch (IOException e) {
+                System.out.println("Error while sending or reading login information");
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                System.out.println("Class not found in login");
+                e.printStackTrace();
             }
+
+        }
     }
 
-    public static void changePassword(){
-        Console cons= System.console();
+    public static void changePassword(BufferedReader commandReader) {
+        Console cons = System.console();
         boolean first = true;
+        String confirmPass, newPass;
         do {
             if (!first)
                 System.out.println("Passwords do not match! Try again");
             System.out.println("Enter new password:");
-            String confirmPass = cons.readPassword();
+            newPass = new String(cons.readPassword());
             System.out.println("Confirm password:");
-            String newPass = cons.readPassword();
+            confirmPass = new String(cons.readPassword());
             first = false;
-        }
-        while(newPass.equals( confirmPass));
-        
-        Request req = new Request("CH-PASS\n"+ newPass,this.token);
-        while (true) {
-            out.writeObject(req);
-            out.flush();
-            Reply reply = (Reply) in.readObject();
-            if (reply.getStatusCode().equals("OK")) {
-                System.out.println("Password change successful! You have been logged out");
-                break;
-            } else {
-                System.out.println("Password change failed. Trying again...");
-            }
-        }
-        this.token="";
-        
-        login();
-    }
-    public static void serverLs(){
-        Request req = new Request("LS",this.token);
-        while (true) {
-            out.writeObject(req);
-            out.flush();
-            Reply reply = (Reply) in.readObject();
-            if (reply.getStatusCode().equals("OK")) {
-                System.out.println(reply.getMessage());
-                break;
-            } else {
-                System.out.println("Ls failed. Trying again...");
-            }
-        }
-    }
-    public static void changeServerWorkingDirectory(String command){
+        } while (!newPass.equals(confirmPass));
 
-        String dir = command.split(" ")[1]; // ! check if double spaces
+        Request req = new Request("CH-PASS\n" + newPass, token);
+        while (true) {
+            try {
+                out.writeObject(req);
+                out.flush();
+                Reply reply = (Reply) in.readObject();
+                if (reply.getStatusCode().equals("OK")) {
+                    System.out.println("Password change successful! You have been logged out");
+                    break;
+                } else {
+                    System.out.println("Password change failed. Trying again...");
+                }
+            } catch (IOException e) {
+                System.out.println("Error while changing password");
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                System.out.println("Class not found while changing pass");
+                e.printStackTrace();
+            }
+        }
+        token = "";
+
+        login(commandReader);
+    }
+
+    public static void serverLs() {
+        Request req = new Request("LS", token); // idempotent
+        while (true) {
+            try {
+                out.writeObject(req);
+                out.flush();
+                Reply reply = (Reply) in.readObject();
+                if (reply.getStatusCode().equals("OK")) {
+                    System.out.println(reply.getMessage());
+                    break;
+                } else {
+                    System.out.println("Ls failed. Trying again...");
+                }
+            } catch (IOException e) {
+                System.out.println("Error in server ls");
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                System.out.println("Class not found in server ls");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void changeServerWorkingDirectory(String command) {
+
+        String dir = command.split(" ", 1)[1]; // ! check if double spaces
 
         String[] paths = dir.split("/");
 
-        for( String p: paths){
-            if (p.equals("..")){
+        for (String p : paths) {
+            if (p.equals("..")) {
                 int lastSlash = serverDir.lastIndexOf("/");
-                if ( lastSlash == -1){
+                if (lastSlash == -1) {
                     System.out.println("Invalid dir");
                     return;
                 }
-                serverDir= serverDir.substring(0,i);
-                
-            }
-            else{
+                serverDir = serverDir.substring(0, lastSlash);
+
+            } else {
                 serverDir = serverDir + p;
             }
         }
 
-
-        Request req = new Request("CD\n"+ serverDir ,this.token);
+        Request req = new Request("CD\n" + serverDir, token);
         while (true) {
-            out.writeObject(req);
-            out.flush();
-            Reply reply = (Reply) in.readObject();
-            if (reply.getStatusCode().equals("OK")) {
-                System.out.println(reply.getMessage());
-                break;
-            } else {
-                System.out.println("Cd failed. Trying again...");
+            try {
+                out.writeObject(req);
+                out.flush();
+                Reply reply = (Reply) in.readObject();
+                if (reply.getStatusCode().equals("OK")) {
+                    System.out.println(reply.getMessage());
+                    break;
+                } else {
+                    System.out.println("Cd failed. Trying again...");
+                }
+            } catch (IOException e) {
+                System.out.println("Error in server ls");
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                System.out.println("Class not found in server ls");
+                e.printStackTrace();
             }
         }
     }
 
-    public static void clientLs(){
+    public static void clientLs() {
+
+    }
+
+    public static void clientCd(String command) {
+        String dir = command.split(" ", 1)[1]; // ! check if double spaces
+
+        String[] paths = dir.split("/");
+
+        for (String p : paths) {
+            if (p.equals("..")) {
+                int lastSlash = clientDir.lastIndexOf("/");
+                if (lastSlash == -1) {
+                    System.out.println("Invalid dir");
+                    return;
+                }
+                clientDir = clientDir.substring(0, lastSlash);
+
+            } else {
+                clientDir = clientDir + p;
+            }
+        }
+    }
+
+    public static void changeServerInfo() {
 
     }
 
     public static boolean handleCommand(String line, BufferedReader commandReader) {
         String[] commands = line.split(" ");
         String command = commands[0];
-        switch (command){
+        switch (command) {
             case "exit":
                 return true;
-                break;
             case "help":
                 System.out.println("Available commands:");
                 // System.out.println("\tlogin -> Authenticate yourself");
@@ -148,13 +224,13 @@ public class Client {
                 System.out.println("\thelp -> Show command list");
                 break;
             case "ch-pass":
-                changePassword();
+                changePassword(commandReader);
                 break;
             case "ch-server-info":
                 changeServerInfo();
                 break;
             case "server-ls":
-                serverLs()
+                serverLs();
                 break;
             case "server-cd":
                 break;
@@ -167,7 +243,7 @@ public class Client {
             case "upload":
                 break;
         }
-        
+
         return false;
     }
 
@@ -193,8 +269,6 @@ public class Client {
         }
     }
 
-    
-
     public static void main(String[] args) {
 
         // read servers' info from config file
@@ -217,13 +291,13 @@ public class Client {
             BufferedReader commandReader = new BufferedReader(input);
             System.out.println("here");
 
-            login();
+            login(commandReader);
 
             System.out.println("Enter command: (help for more info)");
             while (true) {
                 try {
                     command = commandReader.readLine();
-                    if (handleCommand(command, commandReader))  // true when command == exit
+                    if (handleCommand(command, commandReader)) // true when command == exit
                         break;
 
                 } catch (Exception e) {
@@ -239,10 +313,12 @@ public class Client {
         } catch (IOException io) {
             System.out.println(io.getMessage());
             io.printStackTrace();
-        } catch (ClassNotFoundException cnf) {
-            System.out.println(cnf.getMessage());
-            cnf.printStackTrace();
-        } finally {
+        }
+        // catch (ClassNotFoundException cnf) {
+        // System.out.println(cnf.getMessage());
+        // cnf.printStackTrace();
+        // }
+        finally {
             if (s != null) {
                 try {
                     s.close();

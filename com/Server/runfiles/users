@@ -1,2 +1,8 @@
-username passwordHash lastDir
-paulocorte password home
+<username>
+<passwordHash>
+<lastDir>
+<clientDir>
+paulocorte
+password
+paulocorte
+users

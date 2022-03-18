@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+
+import com.Server.CommandHandler;
 import com.Server.auth.*;
+import com.Server.except.AuthorizationException;
 import com.DataTransfer.Reply;
 import com.DataTransfer.Request;
 
@@ -17,60 +20,30 @@ public class ServerConnection extends Thread {
     private ObjectOutputStream out;
     private Auth auth;
     private User user;
+    private String absolutePath;
 
-    public ServerConnection(Socket socket, Auth auth) throws IOException {
+    public ServerConnection(Socket socket, Auth auth, String absolutePath) throws IOException {
         this.socket = socket;
         this.auth = auth;
+        this.absolutePath = absolutePath;
         in = new ObjectInputStream(socket.getInputStream());
         out = new ObjectOutputStream(socket.getOutputStream());
         this.start();
-    } 
-
-    public boolean login() {
-        String response;
-        Request request;
-        Reply reply;
-        boolean authenticated = false;
-        while (!authenticated) {
-            try {
-                request = (Request) in.readObject();
-                /* this is a simple way to ensure the message is read correctly.
-                 * \n's cannot be read in the console
-                 */
-                String[] sp = request.getMessage().split("\n"); 
-                if(!sp[0].equals("LOGIN")) {
-                    throw new Exception("Invalid command")
-                }
-                this.user = auth.authenticate(sp[1], sp[2]);
-                authenticated = true;
-                reply = new Reply(sp[1]+"\n"+this.user.getLastDir(), "OK"); 
-                // sends a token (to be implemented) and the last working directory
-                out.writeObject(reply);
-                return true;
-            } catch (EOFException e) { // happens when socket is closed on the other side
-                System.out.println("EOF:" + e);
-                return false;
-            } catch (Exception e) {
-
-                System.err.println("No authentication was possible");
-                reply = new Reply("Login unsuccessful", "Unauthorized");
-                try {
-                    out.writeObject(reply);
-                } catch (IOException io) {
-                    io.printStackTrace();
-                }
-            }
-            // determine a suitable token
-        }
-        return true;    
     }
 
-    
     public void run() {
-        
-        
-        if(!login()) return;    
 
+        CommandHandler commandHandler = new CommandHandler(this.socket, this);
+
+        Request loginRequest;
+        try {
+            loginRequest = (Request) in.readObject();
+        } catch (ClassNotFoundException | IOException e1) {
+            e1.printStackTrace();
+            return;
+        }
+
+        commandHandler.login(loginRequest);
         System.out.println("Authentication successful! Let us continue!");
         while (true)
 
@@ -79,13 +52,7 @@ public class ServerConnection extends Thread {
                 // handle request
                 Request request = (Request) in.readObject();
                 System.out.println("Request: \"" + request + "\"");
-                if(!request.getToken().equals(this.user.getToken())) {
-                    //! bad things are happening
-                    reply = new Reply("Wrong authentication", "Unauthorized");
-                    out.writeObject(reply);
-                    throw new Exception("Invalid auth token for user "+user.)
-                }
-                handleRequest(request);
+                commandHandler.handleRequest(request);
                 // and send response
             } catch (EOFException e) {
                 System.out.println("EOF:" + e);
@@ -96,7 +63,10 @@ public class ServerConnection extends Thread {
             } catch (ClassNotFoundException cnf) {
                 cnf.printStackTrace();
                 return;
+            } catch (AuthorizationException ae) {
+                ae.printStackTrace();
             }
+
         }
     }
 
@@ -104,5 +74,35 @@ public class ServerConnection extends Thread {
         return auth;
     }
 
-    public 
+    public User getUser() {
+        return user;
+    }
+
+    public User setUser(User user) {
+        return this.user = user;
+    }
+
+    public String getAbsolutePath() {
+        return this.absolutePath;
+    }
+
+    public void sendReply(Reply reply) {
+        try {
+            out.writeObject(reply);
+            out.flush();
+        } catch (IOException io) {
+            io.printStackTrace();
+        }
+    }
+
+    public Request getRequest() {
+        Request req = new Request("", "");
+        try {
+            req = (Request) in.readObject();
+        } catch (ClassNotFoundException | IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return req;
+    }
 }

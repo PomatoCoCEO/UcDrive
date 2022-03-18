@@ -2,16 +2,16 @@ package com.DataTransfer;
 
 import java.io.Serializable;
 
-
-public class Request implements Serializable{
+public class Request implements Serializable {
 
     private String message;
     private String token;
 
     public Request(String message) {
         this.message = message;
-        token= "";
+        token = "";
     }
+
     public Request(String message, String token) {
         this.message = message;
         this.token = token;
@@ -35,7 +35,7 @@ public class Request implements Serializable{
 
     @Override
     public String toString() {
-        return "Auth [message=" + message + "]";
+        return "Request [message=" + message + "]";
     }
-    
+
 }

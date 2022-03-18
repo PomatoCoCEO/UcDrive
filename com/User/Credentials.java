@@ -1,8 +1,9 @@
+
 package com.User;
+
 import java.io.Serializable;
 
-
-public class Credentials implements Serializable{
+public class Credentials implements Serializable {
 
     private String username, password;
 
@@ -28,12 +29,12 @@ public class Credentials implements Serializable{
     }
 
     public String loginString() {
-        return "LOGIN\n"+username+"\n"+password;
+        return "LOGIN\n" + username + "\n" + password;
     }
 
     @Override
     public String toString() {
         return "Auth [password=" + password + ", username=" + username + "]";
     }
-    
+
 }

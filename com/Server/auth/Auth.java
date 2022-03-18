@@ -13,9 +13,12 @@ public class Auth {
         File fr = new File(fileName);
         try (Scanner sc = new Scanner(fr)) {
             while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-                String[] sp = line.split(" ");
-                User u = new User(sp[0], sp[1], sp[2]);
+                String line1 = sc.nextLine();
+                String line2 = sc.nextLine();
+                String line3 = sc.nextLine();
+                String line4 = sc.nextLine();
+                // String[] sp = line.split(" ");
+                User u = new User(line1, line2, line3, line4);
                 users.add(u);
             }
         } catch (FileNotFoundException f) {
@@ -35,15 +38,19 @@ public class Auth {
                 users.remove(user);
                 break;
             case CHANGE:
-                aid = users.ceiling(new User(user.getUsername(), "", ""));
+                aid = users.ceiling(new User(user.getUsername(), "", "", ""));
                 if (aid.getUsername().equals(user.getUsername())) {
                     users.remove(aid);
                     users.add(user);
                 }
+                for (User user2 : users) {
+                    System.out.println(user2);
+                }
+                System.out.println("changed");
                 break;
             case ADD:
                 // verify if user with that username already exists
-                aid = users.ceiling(new User(user.getUsername(), "", ""));
+                aid = users.ceiling(new User(user.getUsername(), "", "", ""));
                 if (aid.getUsername().equals(user.getUsername())) {
                     users.remove(aid);
                     users.add(user);
@@ -55,10 +62,8 @@ public class Auth {
 
     public void registerUser(String username, String password) {
         // ! falta obter a hash da password
-        User user = new User(username, password, "");
-        synchronized (users) {
-            users.add(user);
-        }
+        User user = new User(username, password, "", "");
+        changeUsers(Operation.ADD, user);
     }
 
     public Auth(String fileName) throws IOException {
@@ -67,28 +72,25 @@ public class Auth {
     }
 
     public User authenticate(String username, String password) throws Exception {
-        User found = users.ceiling(new User(username, "", ""));
+        User found = users.ceiling(new User(username, "", "", ""));
         if (!found.getUsername().equals(username) || !found.getPasswordHash().equals(password)) {
             throw new Exception("Authentication failed: user " + found);
         }
-        //! need to calculate token here !!
-        // users.remove(found);
-        // found.setToken(username);
-        // users.add(found);
+
         found.setToken(username);
         changeUsers(Operation.CHANGE, found); // updates the information in the set, based on the username
         return found;
     }
 
-    public static void main(String[] args) {
-        System.out.println("Hello World");
-        try {
-            Auth a = new Auth("com/Server/runfiles/users");
-            String s = a.authenticate("paulocorte", "password");
-            System.out.println(s);
-        } catch (Exception e) {
-            System.out.println("Exception: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+    // public static void main(String[] args) {
+    // System.out.println("Hello World");
+    // try {
+    // Auth a = new Auth("com/Server/runfiles/users");
+    // String s = a.authenticate("paulocorte", "password");
+    // System.out.println(s);
+    // } catch (Exception e) {
+    // System.out.println("Exception: " + e.getMessage());
+    // e.printStackTrace();
+    // }
+    // }
 }

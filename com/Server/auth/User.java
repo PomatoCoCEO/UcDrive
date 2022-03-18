@@ -4,13 +4,23 @@ public class User implements Comparable {
     private String username;
     private String passwordHash;
     private String lastDir;
+    private String clientDir;
     private String token;
 
-    public User(String username, String passwordHash, String lastDir) {
+    public User(String username, String passwordHash, String lastDir, String clientDir) {
         this.username = username;
         this.passwordHash = passwordHash;
         this.lastDir = lastDir;
-        this.token="";
+        this.setClientDir(clientDir);
+        this.token = "";
+    }
+
+    public String getClientDir() {
+        return clientDir;
+    }
+
+    public void setClientDir(String clientDir) {
+        this.clientDir = clientDir;
     }
 
     public String getUsername() {
@@ -44,9 +54,10 @@ public class User implements Comparable {
     public void setToken(String token) {
         this.token = token;
     }
+
     @Override
     public String toString() {
-        return username + " " + passwordHash + " " + lastDir;
+        return "<" + username + ">\n<" + passwordHash + ">\n<" + lastDir + ">\n<" + clientDir + ">";
     }
 
     @Override
