@@ -24,27 +24,17 @@ public class Client {
     public static void login(BufferedReader commandReader) {
         while (true) {
             try {
-                Reply reply;
-                Request login;
-                boolean first = true;
-                do {
-                    if (!first)
-                        System.out.println("Try again");
-                    first = false;
-                    System.out.println("Enter username:");
-                    String username = commandReader.readLine();
-                    System.out.println("Enter password:");
-                    Console c = System.console();
-                    String password = new String(c.readPassword());// commandReader.readLine();
-                    Credentials cred = new Credentials(username, password);
-                    login = new Request(cred.loginString());
-
-                    reply = (Reply) in.readObject();
-                } while (reply.getStatusCode().equals("OK"));
+                System.out.println("Enter username:");
+                String username = commandReader.readLine();
+                System.out.println("Enter password:");
+                Console c = System.console();
+                String password = new String(c.readPassword());// commandReader.readLine();
+                Credentials cred = new Credentials(username, password);
+                Request login = new Request(cred.loginString());
 
                 out.writeObject(login);
                 out.flush();
-                reply = (Reply) in.readObject();
+                Reply reply = (Reply) in.readObject();
                 switch (reply.getStatusCode()) {
                     case "OK":
                         System.out.println("Login successful " + reply.getMessage());
@@ -166,16 +156,69 @@ public class Client {
                     System.out.println("Cd failed. Trying again...");
                 }
             } catch (IOException e) {
-                System.out.println("Error in server ls");
+                System.out.println("Error in server cd");
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
-                System.out.println("Class not found in server ls");
+                System.out.println("Class not found in server cd");
                 e.printStackTrace();
             }
         }
     }
 
-    public static void clientLs() {
+    public static void clientLs(String command) {
+        if (clientDir.equals("invalid")) {
+            // ask for current dir and send it to server
+            clientDir = System.getProperty("user.dir") + "/com/Client/Data";
+            Request req = new Request("CH-CLIENT-DIR\n" + clientDir, token);
+            while (true) {
+                try {
+                    out.writeObject(req);
+                    out.flush();
+                    Reply reply = (Reply) in.readObject();
+                    if (reply.getStatusCode().equals("OK")) {
+                        System.out.println(reply.getMessage());
+                        break;
+                    } else {
+                        System.out.println("Change in client dir failed. Trying again...");
+                    }
+                } catch (IOException e) {
+                    System.out.println("Error in client ls");
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    System.out.println("Class not found in client ls");
+                    e.printStackTrace();
+                }
+            }
+
+        }
+        // ! to remove
+        clientDir = System.getProperty("user.dir") + "/com/Client/Data";
+
+        String[] sp = command.split(" ", 1);
+        String relativePath = "";
+        if (sp.length >= 2) {
+            relativePath = sp[1];
+        }
+
+        Path p = Paths.get(clientDir + "/" + relativePath);
+        try (DirectoryStream<Path> dStream = Files.newDirectoryStream(p)) {
+            // String[] ans = dStream.
+            StringBuilder sb = new StringBuilder("");
+            for (Path filePath : dStream) {
+                String aid = filePath.toString();
+                // just to make this platform-independent
+                if (aid.indexOf("/") >= 0)
+                    sb.append(aid.substring(aid.lastIndexOf("/") + 1));
+                else if (aid.indexOf("\\") >= 0) {
+                    sb.append(aid.substring(aid.lastIndexOf("\\") + 1));
+                } else
+                    sb.append(aid);
+                sb.append('\n');
+            }
+            System.out.println(sb.toString());
+        } catch (IOException io) {
+            io.printStackTrace();
+        }
 
     }
 
@@ -235,6 +278,7 @@ public class Client {
             case "server-cd":
                 break;
             case "client-ls":
+                clientLs(line);
                 break;
             case "client-cd":
                 break;
