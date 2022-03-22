@@ -95,6 +95,16 @@ public class ServerConnection extends Thread {
         }
     }
 
+    public void constructAndSendReply(String message, String statusCode) {
+        Reply reply = new Reply(message, statusCode);
+        try {
+            out.writeObject(reply);
+            out.flush();
+        } catch (IOException io) {
+            io.printStackTrace();
+        }
+    }
+
     public Request getRequest() {
         Request req = new Request("", "");
         try {

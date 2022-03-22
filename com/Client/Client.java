@@ -42,7 +42,7 @@ public class Client {
                         String[] data = server_data.split("\n");
                         token = data[0];
                         serverDir = data[1];
-                        clientDir = data[2];
+                        clientDir = System.getProperty("user.dir") + "/com/Client/Data";
                         return;
                     case "Unauthorized":
                         System.out.println("Wrong username or password");
@@ -100,8 +100,16 @@ public class Client {
         login(commandReader);
     }
 
-    public static void serverLs() {
-        Request req = new Request("LS", token); // idempotent
+    public static void serverLs(String line) {
+        String[] ls = line.split(" ", 2); // ! check if double spaces
+
+        Request req;
+        if (ls.length > 1) {
+            req = new Request("LS\n" + ls[1], token); // idempotent
+        } else {
+            req = new Request("LS", token); // idempotent
+        }
+
         while (true) {
             try {
                 out.writeObject(req);
@@ -125,7 +133,7 @@ public class Client {
 
     public static void changeServerWorkingDirectory(String command) {
 
-        String dir = command.split(" ", 1)[1]; // ! check if double spaces
+        String dir = command.split(" ", 2)[1]; // ! check if double spaces
 
         String[] paths = dir.split("/");
 
@@ -139,7 +147,7 @@ public class Client {
                 serverDir = serverDir.substring(0, lastSlash);
 
             } else {
-                serverDir = serverDir + p;
+                serverDir = serverDir + "/" + p;
             }
         }
 
@@ -166,35 +174,8 @@ public class Client {
     }
 
     public static void clientLs(String command) {
-        if (clientDir.equals("invalid")) {
-            // ask for current dir and send it to server
-            clientDir = System.getProperty("user.dir") + "/com/Client/Data";
-            Request req = new Request("CH-CLIENT-DIR\n" + clientDir, token);
-            while (true) {
-                try {
-                    out.writeObject(req);
-                    out.flush();
-                    Reply reply = (Reply) in.readObject();
-                    if (reply.getStatusCode().equals("OK")) {
-                        System.out.println(reply.getMessage());
-                        break;
-                    } else {
-                        System.out.println("Change in client dir failed. Trying again...");
-                    }
-                } catch (IOException e) {
-                    System.out.println("Error in client ls");
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
-                    System.out.println("Class not found in client ls");
-                    e.printStackTrace();
-                }
-            }
 
-        }
-        // ! to remove
-        clientDir = System.getProperty("user.dir") + "/com/Client/Data";
-
-        String[] sp = command.split(" ", 1);
+        String[] sp = command.split(" ", 2);
         String relativePath = "";
         if (sp.length >= 2) {
             relativePath = sp[1];
@@ -223,23 +204,35 @@ public class Client {
     }
 
     public static void clientCd(String command) {
-        String dir = command.split(" ", 1)[1]; // ! check if double spaces
+        String[] cd = command.split(" ", 2);
+        String dir = "";
 
-        String[] paths = dir.split("/");
+        if (cd.length > 1) {
+            dir = cd[1].trim();
+        } else {
+            clientDir = System.getProperty("user.dir") + "/com/Client/Data";
+            // System.out.println("Please specify the relative path of the new directory.");
+            return;
+        }
+
+        String[] paths = dir.split("[/\\\\]"); // you can have both cases
 
         for (String p : paths) {
+
             if (p.equals("..")) {
-                int lastSlash = clientDir.lastIndexOf("/");
+                int lastSlash = clientDir.lastIndexOf("/"); // linux notation
+                if (lastSlash == -1)
+                    lastSlash = clientDir.lastIndexOf("\\"); // ms dos notation
                 if (lastSlash == -1) {
                     System.out.println("Invalid dir");
                     return;
                 }
                 clientDir = clientDir.substring(0, lastSlash);
-
             } else {
-                clientDir = clientDir + p;
+                clientDir = clientDir + "/" + p;
             }
         }
+        System.out.println("new directory: " + clientDir);
     }
 
     public static void changeServerInfo() {
@@ -247,7 +240,7 @@ public class Client {
     }
 
     public static boolean handleCommand(String line, BufferedReader commandReader) {
-        String[] commands = line.split(" ");
+        String[] commands = line.split(" ", 2);
         String command = commands[0];
         switch (command) {
             case "exit":
@@ -273,19 +266,23 @@ public class Client {
                 changeServerInfo();
                 break;
             case "server-ls":
-                serverLs();
+                serverLs(line);
                 break;
             case "server-cd":
+                changeServerWorkingDirectory(line);
                 break;
             case "client-ls":
                 clientLs(line);
                 break;
             case "client-cd":
+                clientCd(line);
                 break;
             case "download":
                 break;
             case "upload":
                 break;
+            default:
+                System.out.println("Not a valid command");
         }
 
         return false;
@@ -340,7 +337,7 @@ public class Client {
             System.out.println("Enter command: (help for more info)");
             while (true) {
                 try {
-                    command = commandReader.readLine();
+                    command = commandReader.readLine().trim();
                     if (handleCommand(command, commandReader)) // true when command == exit
                         break;
 

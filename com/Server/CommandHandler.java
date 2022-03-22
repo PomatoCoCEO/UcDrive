@@ -48,6 +48,9 @@ public class CommandHandler {
             case "LS":
                 handleLs(request);
                 break;
+            case "CD":
+                handleCd(request);
+                break;
         }
 
     }
@@ -101,14 +104,17 @@ public class CommandHandler {
     }
 
     private void handleLs(Request request) {
-        String[] sp = request.getMessage().split("\n", 1);
+        String[] sp = request.getMessage().split("\n", 2);
         String relativePath = "";
+        // if it has no argument then we just get the user's last directory
         if (sp.length >= 2) {
+            // else we need to add a relative part to the path
             relativePath = sp[1];
         }
         String currentPath = serverConnection.getUser().getLastDir();
         // ! we could do some verification here
-        Path p = Paths.get(serverConnection.getAbsolutePath() + "/" + currentPath + "/" + relativePath);
+        Path p = Paths.get(currentPath, relativePath);
+
         Reply reply = new Reply("", "Internal Server Error"); // will not be changed if there is an error
         try (DirectoryStream<Path> dStream = Files.newDirectoryStream(p)) {
             // String[] ans = dStream.
@@ -125,11 +131,33 @@ public class CommandHandler {
                 sb.append('\n');
             }
             reply = new Reply(sb.toString(), "OK");
-            serverConnection.sendReply(reply);
         } catch (IOException io) {
             io.printStackTrace();
         } finally {
             serverConnection.sendReply(reply);
         }
+    }
+
+    private void handleCd(Request request) {
+        String[] sp = request.getMessage().split("\n", 2);
+        String path = "";
+        // if it has no argument then we just get the user's last directory
+        if (sp.length >= 2) {
+            // else we need to add a relative part to the path
+            path = serverConnection.getAbsolutePath() + "/" + sp[1];
+        } else {
+            // go to the default directory
+            path = serverConnection.getAbsolutePath() + "/" + serverConnection.getUser().getUsername();
+        }
+        try (DirectoryStream<Path> dStream = Files.newDirectoryStream(Paths.get(path))) {
+            // just to make sure that this directory actually exists
+            serverConnection.getUser().setLastDir(path);
+            serverConnection.getAuth().changeUsers(Operation.CHANGE, serverConnection.getUser());
+            serverConnection.constructAndSendReply("Directory changed", "OK");
+        } catch (IOException io) {
+            serverConnection.constructAndSendReply("Invalid directory", "Internal Server Error");
+            io.printStackTrace();
+        }
+        System.out.println("New path for user: " + serverConnection.getUser().getLastDir());
     }
 }
