@@ -1,8 +1,10 @@
 package com.DataTransfer;
 
-public class FileChunk {
+import java.io.Serializable;
+
+public class FileChunk implements Serializable {
     private byte[] bytes;
-    public FileChunk(byte[] bytes) {
+    public FileChunk(byte[] bytes)  {
         this.bytes = bytes;
     }
     public byte[] getBytes() {

@@ -302,8 +302,8 @@ public class CommandHandler {
             Socket receiver = serverSocket.accept();
             ObjectOutputStream oos = new ObjectOutputStream(receiver.getOutputStream());
             oos.flush();
-            ObjectInputStream ios = new ObjectInputStream(receiver.getInputStream());
-            reply = (Reply)ios.readObject();
+            ObjectInputStream ois = new ObjectInputStream(receiver.getInputStream());
+            reply = (Reply)ois.readObject();
             String fileMetaData = reply.getMessage();
             String[] fileDataSplit = fileMetaData.split("\n");
             if(fileDataSplit.length<6 ||
@@ -318,29 +318,17 @@ public class CommandHandler {
             int byteSize = Integer.parseInt(fileDataSplit[3]);
             int blockNumber = Integer.parseInt(fileDataSplit[5]);
 
-            try {
-                File myObj = new File(name);
-                if (myObj.createNewFile()) {
-                    System.out.println("File created: " + myObj.getName());
-                } else {
-                    System.out.println("File already exists.");
-                }
-            } catch (IOException e) {
-                System.out.println("An error occurred.");
-                e.printStackTrace();
-            }
-            for(int i = 0; i< blockNumber; i++){
-                FileChunk chunk = (FileChunk) ios.readObject();
-
-            }
-            
-
+            FileTransfer ft = new FileTransfer(ois, oos, byteSize, blockNumber, name);
+            ft.join(); // do we wait for the conclusion of the transfer?
         } catch(IOException io) {
             System.out.println("Problems trying to download: "+io.getMessage());
             io.printStackTrace();
         } catch(ClassNotFoundException cnf) {
             System.out.println("Problems trying to download: "+cnf.getMessage());
             cnf.printStackTrace();
+        } catch(InterruptedException ie){
+            System.out.println("Problems trying to download: "+ie.getMessage());
+            ie.printStackTrace();
         }
     }
 }
