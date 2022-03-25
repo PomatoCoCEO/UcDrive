@@ -3,6 +3,10 @@ package com.Client;
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -273,4 +277,51 @@ public class CommandHandler {
         return false;
     }
 
+    public void sendFile(String command) {
+        String [] sp = command.split(" ",2);
+        if(sp.length <2) {
+            System.out.println("Command format : <download> <file name>");
+            return;
+        }
+        Request req = new Request("DOWNLOAD\n"+sp[1], Client.getToken());
+        clientConnection.sendRequest(req);
+        Reply rep = clientConnection.getReply();
+        if(!rep.getStatusCode().equals("OK") || !rep.getMessage().equals("FILE EXISTS")) {
+            System.out.println("Problems acquiring the specified file: "+rep.getMessage());
+            return;
+        }
+        
+        try(ServerSocket serverSocket = new ServerSocket(0)){
+            // port dynamically allocated
+            req.setMessage("PORT\n"+serverSocket.getLocalPort());
+            req.setToken(Client.getToken());
+            clientConnection.sendRequest(req); 
+            Socket receiver = serverSocket.accept();
+            ObjectOutputStream oos = new ObjectOutputStream(receiver.getOutputStream());
+            ObjectInputStream ios = new ObjectInputStream(receiver.getInputStream());
+            reply = (Reply)ios.readObject();
+            String fileMetaData = reply.getMessage();
+            String[] fileDataSplit = fileMetaData.split("\n");
+            if(fileDataSplit.length<6 ||
+                !fileDataSplit[0].equals("FILE") ||
+                !fileDataSplit[2].equals("SIZE") ||
+                !fileDataSplit[4].equals("BLOCKS")
+                ) {
+                    System.err.println("Errors communicating with the server");
+                    return;
+                }
+            String name = fileDataSplit[1];
+            int byteSize = Integer.parseInt(fileDataSplit[3]);
+            int blockNumber = Integer.parseInt(fileDataSplit[5]);
+
+        } catch(IOException io) {
+            System.out.println("Problems trying to download: "+io.getMessage());
+            io.printStackTrace();
+        } catch(ClassNotFoundException cnf) {
+            System.out.println("Problems trying to download: "+cnf.getMessage());
+            cnf.printStackTrace();
+        }
+
+        
+    }
 }
