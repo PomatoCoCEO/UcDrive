@@ -3,14 +3,14 @@ package com.Server.auth;
 public class User implements Comparable {
     private String username;
     private String passwordHash;
-    private String lastDir;
+    private String serverDir;
     private String clientDir;
     private String token;
 
-    public User(String username, String passwordHash, String lastDir, String clientDir) {
+    public User(String username, String passwordHash, String serverDir, String clientDir) {
         this.username = username;
         this.passwordHash = passwordHash;
-        this.lastDir = lastDir;
+        this.serverDir = serverDir;
         this.setClientDir(clientDir);
         this.token = "";
     }
@@ -39,12 +39,12 @@ public class User implements Comparable {
         this.passwordHash = passwordHash;
     }
 
-    public String getLastDir() {
-        return lastDir;
+    public String getServerDir() {
+        return serverDir;
     }
 
-    public void setLastDir(String lastDir) {
-        this.lastDir = lastDir;
+    public void setServerDir(String serverDir) {
+        this.serverDir = serverDir;
     }
 
     public String getToken() {
@@ -57,7 +57,7 @@ public class User implements Comparable {
 
     @Override
     public String toString() {
-        return "<" + username + ">\n<" + passwordHash + ">\n<" + lastDir + ">\n<" + clientDir + ">";
+        return "<" + username + ">\n<" + passwordHash + ">\n<" + serverDir + ">\n<" + clientDir + ">";
     }
 
     @Override

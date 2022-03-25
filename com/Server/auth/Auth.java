@@ -11,6 +11,8 @@ public class Auth {
 
     public void loadUsers(String fileName) throws IOException {
         File fr = new File(fileName);
+        String absolutePath = System.getProperty("user.dir") + "/com/Server/data/"; 
+        // this is in the server so it is ok
         try (Scanner sc = new Scanner(fr)) {
             while (sc.hasNextLine()) {
                 String line1 = sc.nextLine();

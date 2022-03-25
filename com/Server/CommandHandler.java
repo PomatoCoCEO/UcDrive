@@ -77,7 +77,7 @@ public class CommandHandler {
                 authenticated = true;
                 // ! we need to determine a token!
                 reply = new Reply(
-                        sp[1] + "\n" + serverConnection.getUser().getLastDir() + "\n"
+                        sp[1] + "\n" + serverConnection.getUser().getServerDir() + "\n"
                                 + serverConnection.getUser().getClientDir(),
                         "OK");
                 // sends a token (to be implemented) and the last working directory
@@ -96,7 +96,7 @@ public class CommandHandler {
         System.out.println("Split");
         String newPassword = sp[1];
         User user = serverConnection.getUser();
-        User userChanged = new User(user.getUsername(), newPassword, user.getLastDir(), user.getClientDir());
+        User userChanged = new User(user.getUsername(), newPassword, user.getServerDir(), user.getClientDir());
         serverConnection.getAuth().changeUsers(Operation.CHANGE, userChanged);
         System.out.println("Changed");
         Reply reply = new Reply("Password changed!", "OK");
@@ -107,15 +107,18 @@ public class CommandHandler {
         String[] sp = request.getMessage().split("\n", 2);
         String relativePath = "";
         // if it has no argument then we just get the user's last directory
+        System.out.println("Relative path: "+relativePath);
         if (sp.length >= 2) {
             // else we need to add a relative part to the path
             relativePath = sp[1];
         }
-        String currentPath = serverConnection.getUser().getLastDir();
+        String currentPath = serverConnection.getUser().getServerDir();
+        System.out.println("Current path : "+currentPath);
         // ! we could do some verification here
-        Path p = Paths.get(currentPath, relativePath);
+        Path p = Paths.get(serverConnection.getAbsolutePath(),currentPath, relativePath); 
+        // ! we shall not share the internal structure of the server with the clients!!!
 
-        Reply reply = new Reply("", "Internal Server Error"); // will not be changed if there is an error
+        Reply reply = new Reply("Invalid path", "Internal Server Error"); // will not be changed if there is an error
         try (DirectoryStream<Path> dStream = Files.newDirectoryStream(p)) {
             // String[] ans = dStream.
             StringBuilder sb = new StringBuilder("");
@@ -140,24 +143,24 @@ public class CommandHandler {
 
     private void handleCd(Request request) {
         String[] sp = request.getMessage().split("\n", 2);
-        String path = "";
+        String relativePath = "";
         // if it has no argument then we just get the user's last directory
         if (sp.length >= 2) {
             // else we need to add a relative part to the path
-            path = serverConnection.getAbsolutePath() + "/" + sp[1];
+            relativePath =  sp[1];
         } else {
             // go to the default directory
-            path = serverConnection.getAbsolutePath() + "/" + serverConnection.getUser().getUsername();
+            relativePath = "";
         }
-        try (DirectoryStream<Path> dStream = Files.newDirectoryStream(Paths.get(path))) {
+        try (DirectoryStream<Path> dStream = Files.newDirectoryStream(Paths.get(serverConnection.getAbsolutePath(), relativePath))) {
             // just to make sure that this directory actually exists
-            serverConnection.getUser().setLastDir(path);
+            serverConnection.getUser().setServerDir(relativePath);
             serverConnection.getAuth().changeUsers(Operation.CHANGE, serverConnection.getUser());
             serverConnection.constructAndSendReply("Directory changed", "OK");
         } catch (IOException io) {
             serverConnection.constructAndSendReply("Invalid directory", "Internal Server Error");
             io.printStackTrace();
         }
-        System.out.println("New path for user: " + serverConnection.getUser().getLastDir());
+        System.out.println("New path for user: " + serverConnection.getUser().getServerDir());
     }
 }

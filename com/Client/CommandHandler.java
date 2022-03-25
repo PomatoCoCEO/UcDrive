@@ -44,7 +44,7 @@ public class CommandHandler {
                         String server_data = reply.getMessage();
                         String[] data = server_data.split("\n");
                         Client.setToken(data[0]);
-                        Client.setServerDir(data[1]);
+                        Client.setServerDir(data[1]); // this is the problematic part
                         Client.setClientDir(System.getProperty("user.dir") + "/com/Client/Data");
                         return;
                     case "Unauthorized":
@@ -111,7 +111,8 @@ public class CommandHandler {
                 System.out.println(reply.getMessage());
                 break;
             } else {
-                System.out.println("Ls failed. Trying again...");
+                System.out.println("Ls failed: "+reply.getMessage());
+                break;
             }
 
         }
@@ -119,9 +120,12 @@ public class CommandHandler {
 
     public void changeServerWorkingDirectory(String command) {
 
-        String dir = command.split(" ", 2)[1]; // ! check if double spaces
+        String dir = "";
+        String [] sp = command.split(" ", 2);
+        // String dir = command.split(" ", 2)[1]; // ! check if double spaces
+        if(sp.length>=2) dir = sp[1];
         String serverDir = Client.getServerDir();
-
+        System.out.println("Server dir: "+serverDir);
         String[] paths = dir.split("/");
 
         for (String p : paths) {
@@ -137,7 +141,7 @@ public class CommandHandler {
                 serverDir = serverDir + "/" + p;
             }
         }
-        Client.setServerDir(serverDir);
+        // client server-cd should not be handled before response but after a successful response
 
         Request req = new Request("CD\n" + serverDir, Client.getToken());
         while (true) {
@@ -146,6 +150,7 @@ public class CommandHandler {
             Reply reply = clientConnection.getReply();
             if (reply.getStatusCode().equals("OK")) {
                 System.out.println(reply.getMessage());
+                Client.setServerDir(serverDir);
                 break;
             } else {
                 System.out.println("Cd failed. Trying again...");
