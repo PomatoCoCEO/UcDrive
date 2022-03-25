@@ -1,4 +1,5 @@
 package com.Client;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -16,7 +17,8 @@ public class FileTransfer extends Thread {
     private ObjectOutputStream oos;
     private int byteSize, noBlocks;
     private String fileName;
-    public FileTransfer (ObjectInputStream ois, ObjectOutputStream oos, int byteSize, int noBlocks, String fileName) {
+
+    public FileTransfer(ObjectInputStream ois, ObjectOutputStream oos, int byteSize, int noBlocks, String fileName) {
         this.ois = ois;
         this.oos = oos;
         this.byteSize = byteSize;
@@ -28,15 +30,21 @@ public class FileTransfer extends Thread {
     public void run() {
         try {
             String fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/'));
-            String filePath = Paths.get(Client.getClientDir(),fileNameWithoutDirectory).toString();  
+            String filePath = Paths.get(Client.getClientDir(), fileNameWithoutDirectory).toString();
             File myObj = new File(filePath);
             FileOutputStream fos = new FileOutputStream(myObj);
             if (myObj.createNewFile()) {
                 System.out.println("File created: " + myObj.getName());
             } else {
+
+                // ! give the file another name maybe
+
                 System.out.println("File already exists.");
             }
-            for(int i = 0; i< noBlocks; i++){
+            for (int i = 0; i < noBlocks; i++) {
+
+                // ! check last block size ??
+
                 FileChunk chunk = (FileChunk) ois.readObject();
                 // ! we might need to cache this
                 fos.write(chunk.getBytes());
@@ -48,7 +56,7 @@ public class FileTransfer extends Thread {
         } catch (IOException e) {
             System.out.println("An error occurred:");
             e.printStackTrace();
-        } catch(ClassNotFoundException cnf) {
+        } catch (ClassNotFoundException cnf) {
             System.out.println("An error occurred:");
             cnf.printStackTrace();
         }

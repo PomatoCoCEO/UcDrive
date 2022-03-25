@@ -117,7 +117,7 @@ public class CommandHandler {
                 System.out.println(reply.getMessage());
                 break;
             } else {
-                System.out.println("Ls failed: "+reply.getMessage());
+                System.out.println("Ls failed: " + reply.getMessage());
                 break;
             }
 
@@ -127,11 +127,12 @@ public class CommandHandler {
     public void changeServerWorkingDirectory(String command) {
 
         String dir = "";
-        String [] sp = command.split(" ", 2);
+        String[] sp = command.split(" ", 2);
         // String dir = command.split(" ", 2)[1]; // ! check if double spaces
-        if(sp.length>=2) dir = sp[1];
+        if (sp.length >= 2)
+            dir = sp[1];
         String serverDir = Client.getServerDir();
-        System.out.println("Server dir: "+serverDir);
+        System.out.println("Server dir: " + serverDir);
         String[] paths = dir.split("/");
 
         for (String p : paths) {
@@ -147,7 +148,8 @@ public class CommandHandler {
                 serverDir = serverDir + "/" + p;
             }
         }
-        // client server-cd should not be handled before response but after a successful response
+        // client server-cd should not be handled before response but after a successful
+        // response
 
         Request req = new Request("CD\n" + serverDir, Client.getToken());
         while (true) {
@@ -158,8 +160,8 @@ public class CommandHandler {
                 System.out.println(reply.getMessage());
                 Client.setServerDir(serverDir);
                 break;
-            } else if(reply.getStatusCode().equals("Bad Request")) {
-                System.out.println("Invalid command: "+reply.getMessage());
+            } else if (reply.getStatusCode().equals("Bad Request")) {
+                System.out.println("Invalid command: " + reply.getMessage());
                 break;
             } else {
                 System.out.println("Cd failed. Trying again...");
@@ -233,6 +235,59 @@ public class CommandHandler {
         System.out.println("new directory: " + clientDir);
     }
 
+    public void downloadFile(String command) {
+        String[] sp = command.split(" ", 2);
+        if (sp.length < 2) {
+            System.out.println("Command format : <download> <file name>");
+            return;
+        }
+        Request req = new Request("DOWNLOAD\n" + sp[1], Client.getToken());
+        clientConnection.sendRequest(req);
+        Reply rep = clientConnection.getReply();
+        if (!rep.getStatusCode().equals("OK") || !rep.getMessage().equals("FILE EXISTS")) {
+            System.out.println("Problems acquiring the specified file: " + rep.getMessage());
+            return;
+        }
+
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+            // port dynamically allocated
+            // !check if socket is valid
+            req.setMessage("PORT\n" + serverSocket.getLocalPort());
+            req.setToken(Client.getToken());
+            clientConnection.sendRequest(req);
+            Socket receiver = serverSocket.accept();
+            ObjectOutputStream oos = new ObjectOutputStream(receiver.getOutputStream());
+            oos.flush();
+            ObjectInputStream ois = new ObjectInputStream(receiver.getInputStream());
+            reply = (Reply) ois.readObject();
+            String fileMetaData = reply.getMessage();
+            String[] fileDataSplit = fileMetaData.split("\n");
+            if (fileDataSplit.length < 6 ||
+                    !fileDataSplit[0].equals("FILE") ||
+                    !fileDataSplit[2].equals("SIZE") ||
+                    !fileDataSplit[4].equals("BLOCKS")) {
+                System.err.println("Errors communicating with the server");
+                return;
+            }
+            String name = fileDataSplit[1];
+            int byteSize = Integer.parseInt(fileDataSplit[3]);
+            int blockNumber = Integer.parseInt(fileDataSplit[5]);
+
+            FileTransfer ft = new FileTransfer(ois, oos, byteSize, blockNumber, name);
+            ft.join(); // do we wait for the conclusion of the transfer?
+                       // ! dont think we do
+        } catch (IOException io) {
+            System.out.println("Problems trying to download: " + io.getMessage());
+            io.printStackTrace();
+        } catch (ClassNotFoundException cnf) {
+            System.out.println("Problems trying to download: " + cnf.getMessage());
+            cnf.printStackTrace();
+        } catch (InterruptedException ie) {
+            System.out.println("Problems trying to download: " + ie.getMessage());
+            ie.printStackTrace();
+        }
+    }
+
     public boolean handleCommand(String line, BufferedReader commandReader) {
         String[] commands = line.split(" ", 2);
         String command = commands[0];
@@ -269,6 +324,7 @@ public class CommandHandler {
                 clientCd(line);
                 break;
             case "download":
+                downloadFile(line);
                 break;
             case "upload":
                 break;
@@ -277,58 +333,5 @@ public class CommandHandler {
         }
 
         return false;
-    }
-
-    public void sendFile(String command) {
-        String [] sp = command.split(" ",2);
-        if(sp.length <2) {
-            System.out.println("Command format : <download> <file name>");
-            return;
-        }
-        Request req = new Request("DOWNLOAD\n"+sp[1], Client.getToken());
-        clientConnection.sendRequest(req);
-        Reply rep = clientConnection.getReply();
-        if(!rep.getStatusCode().equals("OK") || !rep.getMessage().equals("FILE EXISTS")) {
-            System.out.println("Problems acquiring the specified file: "+rep.getMessage());
-            return;
-        }
-        
-        try(ServerSocket serverSocket = new ServerSocket(0)){
-            // port dynamically allocated
-            // !check if socket is valid
-            req.setMessage("PORT\n"+serverSocket.getLocalPort());
-            req.setToken(Client.getToken());
-            clientConnection.sendRequest(req); 
-            Socket receiver = serverSocket.accept();
-            ObjectOutputStream oos = new ObjectOutputStream(receiver.getOutputStream());
-            oos.flush();
-            ObjectInputStream ois = new ObjectInputStream(receiver.getInputStream());
-            reply = (Reply)ois.readObject();
-            String fileMetaData = reply.getMessage();
-            String[] fileDataSplit = fileMetaData.split("\n");
-            if(fileDataSplit.length<6 ||
-                !fileDataSplit[0].equals("FILE") ||
-                !fileDataSplit[2].equals("SIZE") ||
-                !fileDataSplit[4].equals("BLOCKS")
-                ) {
-                    System.err.println("Errors communicating with the server");
-                    return;
-                }
-            String name = fileDataSplit[1];
-            int byteSize = Integer.parseInt(fileDataSplit[3]);
-            int blockNumber = Integer.parseInt(fileDataSplit[5]);
-
-            FileTransfer ft = new FileTransfer(ois, oos, byteSize, blockNumber, name);
-            ft.join(); // do we wait for the conclusion of the transfer?
-        } catch(IOException io) {
-            System.out.println("Problems trying to download: "+io.getMessage());
-            io.printStackTrace();
-        } catch(ClassNotFoundException cnf) {
-            System.out.println("Problems trying to download: "+cnf.getMessage());
-            cnf.printStackTrace();
-        } catch(InterruptedException ie){
-            System.out.println("Problems trying to download: "+ie.getMessage());
-            ie.printStackTrace();
-        }
     }
 }
