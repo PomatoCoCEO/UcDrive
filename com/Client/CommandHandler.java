@@ -2,6 +2,7 @@ package com.Client;
 
 import java.io.BufferedReader;
 import java.io.Console;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.Client.conn.ClientConnection;
+import com.DataTransfer.FileChunk;
 import com.DataTransfer.Reply;
 import com.DataTransfer.Request;
 import com.Server.conn.ServerConnection;
@@ -293,11 +295,13 @@ public class CommandHandler {
         
         try(ServerSocket serverSocket = new ServerSocket(0)){
             // port dynamically allocated
+            // !check if socket is valid
             req.setMessage("PORT\n"+serverSocket.getLocalPort());
             req.setToken(Client.getToken());
             clientConnection.sendRequest(req); 
             Socket receiver = serverSocket.accept();
             ObjectOutputStream oos = new ObjectOutputStream(receiver.getOutputStream());
+            oos.flush();
             ObjectInputStream ios = new ObjectInputStream(receiver.getInputStream());
             reply = (Reply)ios.readObject();
             String fileMetaData = reply.getMessage();
@@ -314,6 +318,23 @@ public class CommandHandler {
             int byteSize = Integer.parseInt(fileDataSplit[3]);
             int blockNumber = Integer.parseInt(fileDataSplit[5]);
 
+            try {
+                File myObj = new File(name);
+                if (myObj.createNewFile()) {
+                    System.out.println("File created: " + myObj.getName());
+                } else {
+                    System.out.println("File already exists.");
+                }
+            } catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+            for(int i = 0; i< blockNumber; i++){
+                FileChunk chunk = (FileChunk) ios.readObject();
+
+            }
+            
+
         } catch(IOException io) {
             System.out.println("Problems trying to download: "+io.getMessage());
             io.printStackTrace();
@@ -321,7 +342,5 @@ public class CommandHandler {
             System.out.println("Problems trying to download: "+cnf.getMessage());
             cnf.printStackTrace();
         }
-
-        
     }
 }
