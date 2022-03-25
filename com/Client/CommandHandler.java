@@ -152,6 +152,9 @@ public class CommandHandler {
                 System.out.println(reply.getMessage());
                 Client.setServerDir(serverDir);
                 break;
+            } else if(reply.getStatusCode().equals("Bad Request")) {
+                System.out.println("Invalid command: "+reply.getMessage());
+                break;
             } else {
                 System.out.println("Cd failed. Trying again...");
             }

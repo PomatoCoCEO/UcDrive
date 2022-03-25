@@ -158,7 +158,7 @@ public class CommandHandler {
             serverConnection.getAuth().changeUsers(Operation.CHANGE, serverConnection.getUser());
             serverConnection.constructAndSendReply("Directory changed", "OK");
         } catch (IOException io) {
-            serverConnection.constructAndSendReply("Invalid directory", "Internal Server Error");
+            serverConnection.constructAndSendReply("Invalid directory", "Bad Request");
             io.printStackTrace();
         }
         System.out.println("New path for user: " + serverConnection.getUser().getServerDir());
