@@ -26,8 +26,9 @@ public class ServerConnection extends Thread {
         this.socket = socket;
         this.auth = auth;
         this.absolutePath = absolutePath;
-        in = new ObjectInputStream(socket.getInputStream());
         out = new ObjectOutputStream(socket.getOutputStream());
+        out.flush();
+        in = new ObjectInputStream(socket.getInputStream());
         this.start();
     }
 
