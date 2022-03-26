@@ -12,16 +12,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class Server {
-    protected static ServerSocket serverSocket;
-    protected static String absolutePath;
+public class SecondaryServer extends Server {
 
     public static void main(String[] args) {
+
         try {
             System.out.println("Current directory: " + System.getProperty("user.dir"));
             absolutePath = System.getProperty("user.dir") + "/com/Server/data";
             Auth authenticationInfo = new Auth("com/Server/runfiles/users");
-            ConfigServer config = new ConfigServer("com/Server/runfiles/config");
+            ConfigServer config = new ConfigServer("com/Server/runfiles/Sconfig");
             ServerSocket listenSocket = new ServerSocket(config.getSocketPort());
             System.out.println("LISTEN SOCKET=" + listenSocket);
             while (true) {
@@ -36,7 +35,4 @@ public class Server {
         }
     }
 
-    public static String getAbsolutePath() {
-        return absolutePath;
-    }
 }

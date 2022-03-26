@@ -15,7 +15,7 @@ import java.util.Arrays;
 import com.Client.Client;
 import com.enums.ResponseStatus;
 
-public class FileTransfer extends Thread {
+public class UDPTransfer extends Thread {
     private ObjectInputStream ois;
     private ObjectOutputStream oos;
     private long byteSize, noBlocks;
@@ -23,7 +23,7 @@ public class FileTransfer extends Thread {
     public static final int BLOCK_BYTE_SIZE = 8192;
     private boolean send;
 
-    public FileTransfer(ObjectInputStream ois, ObjectOutputStream oos, long byteSize, long noBlocks, String dirPath,
+    public UDPTransfer(ObjectInputStream ois, ObjectOutputStream oos, long byteSize, long noBlocks, String dirPath,
             String fileName, boolean send) {
         this.ois = ois;
         this.oos = oos;

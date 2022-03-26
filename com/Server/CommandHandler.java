@@ -17,6 +17,7 @@ import com.Server.auth.User;
 import com.Server.auth.Auth.Operation;
 import com.Server.conn.ServerConnection;
 import com.Server.except.AuthorizationException;
+import com.enums.ResponseStatus;
 import com.DataTransfer.FileTransfer;
 
 public class CommandHandler {
@@ -82,7 +83,7 @@ public class CommandHandler {
                 serverConnection.constructAndSendReply("Inexistent file", "Bad Request");
                 return;
             }
-            serverConnection.constructAndSendReply("FILE EXISTS", "OK");
+            serverConnection.constructAndSendReply("FILE EXISTS", ResponseStatus.OK.getStatus());
             System.out.println("File exists sent");
             Request portNoReq = serverConnection.getRequest();
             System.out.println("Got answer port no" + portNoReq);
@@ -113,7 +114,8 @@ public class CommandHandler {
 
     public void handleUpload(Request request) {
         try (ServerSocket listenUploadSocket = new ServerSocket(0)) {
-            serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(), "OK");
+            serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(),
+                    ResponseStatus.OK.getStatus());
             Socket uploadSocket = listenUploadSocket.accept();
             ObjectOutputStream oos = new ObjectOutputStream(uploadSocket.getOutputStream());
             oos.flush();
@@ -167,7 +169,7 @@ public class CommandHandler {
                 reply = new Reply(
                         sp[1] + "\n" + serverConnection.getUser().getServerDir() + "\n"
                                 + serverConnection.getUser().getClientDir(),
-                        "OK");
+                        ResponseStatus.OK.getStatus());
                 // sends a token (to be implemented) and the last working directory
                 serverConnection.sendReply(reply);
             } catch (Exception e) {
@@ -187,7 +189,7 @@ public class CommandHandler {
         User userChanged = new User(user.getUsername(), newPassword, user.getServerDir(), user.getClientDir());
         serverConnection.getAuth().changeUsers(Operation.CHANGE, userChanged);
         System.out.println("Changed");
-        Reply reply = new Reply("Password changed!", "OK");
+        Reply reply = new Reply("Password changed!", ResponseStatus.OK.getStatus());
         serverConnection.sendReply(reply);
     }
 
@@ -221,7 +223,7 @@ public class CommandHandler {
                     sb.append(aid);
                 sb.append('\n');
             }
-            reply = new Reply(sb.toString(), "OK");
+            reply = new Reply(sb.toString(), ResponseStatus.OK.getStatus());
         } catch (IOException io) {
             io.printStackTrace();
         } finally {
@@ -245,7 +247,7 @@ public class CommandHandler {
             // just to make sure that this directory actually exists
             serverConnection.getUser().setServerDir(relativePath);
             serverConnection.getAuth().changeUsers(Operation.CHANGE, serverConnection.getUser());
-            serverConnection.constructAndSendReply("Directory changed", "OK");
+            serverConnection.constructAndSendReply("Directory changed", ResponseStatus.OK.getStatus());
         } catch (IOException io) {
             serverConnection.constructAndSendReply("Invalid directory", "Bad Request");
             io.printStackTrace();
