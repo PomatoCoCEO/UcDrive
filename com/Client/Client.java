@@ -40,7 +40,7 @@ public class Client {
             InputStreamReader input = new InputStreamReader(System.in);
             BufferedReader commandReader = new BufferedReader(input);
 
-            CommandHandler commandHandler = new CommandHandler(clientConnection,s);
+            CommandHandler commandHandler = new CommandHandler(clientConnection, s);
             // System.out.println("here");
 
             commandHandler.login(commandReader);

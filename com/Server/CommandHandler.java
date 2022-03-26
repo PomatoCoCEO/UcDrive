@@ -67,52 +67,56 @@ public class CommandHandler {
     }
 
     public void handleDownload(Request request) {
-        String [] sp = request.getMessage().split("\n");
-        if(sp.length<2) {
+        String[] sp = request.getMessage().split("\n");
+        if (sp.length < 2) {
             serverConnection.constructAndSendReply("Not enough arguments", "Bad Request");
             return;
         }
         try {
             String fileName = sp[1];
-            Path absolutePath = Paths.get(serverConnection.getAbsolutePath(),serverConnection.getUser().getServerDir(), fileName);
+            Path absolutePath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir(),
+                    fileName);
             String absolutePathString = absolutePath.toString();
             File f = new File(absolutePathString);
-            if(!f.exists() || !f.isFile()) {
+            if (!f.exists() || !f.isFile()) {
                 serverConnection.constructAndSendReply("Inexistent file", "Bad Request");
                 return;
             }
             serverConnection.constructAndSendReply("FILE EXISTS", "OK");
             System.out.println("File exists sent");
             Request portNoReq = serverConnection.getRequest();
-            System.out.println("Got answer port no"+portNoReq);
+            System.out.println("Got answer port no" + portNoReq);
             String[] msgPort = portNoReq.getMessage().split("\n");
-            if(msgPort.length<2||!msgPort[0].equals("PORT")) {
+            if (msgPort.length < 2 || !msgPort[0].equals("PORT")) {
                 serverConnection.constructAndSendReply("Insufficient port information", "Bad Request");
                 return;
             }
             int portNo = Integer.parseInt(msgPort[1]);
-            System.out.println("Got port: "+portNo);
+            System.out.println("Got port: " + portNo);
             Socket sendSocket = new Socket(socket.getInetAddress(), portNo);
-            ObjectInputStream oisSocket = new ObjectInputStream(sendSocket.getInputStream());
             ObjectOutputStream oosSocket = new ObjectOutputStream(sendSocket.getOutputStream());
             oosSocket.flush();
+            ObjectInputStream oisSocket = new ObjectInputStream(sendSocket.getInputStream());
             long bytes = Files.size(absolutePath);
-            long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE) + (bytes % (FileTransfer.BLOCK_BYTE_SIZE)==0?0:1);
+            long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE)
+                    + (bytes % (FileTransfer.BLOCK_BYTE_SIZE) == 0 ? 0 : 1);
             System.out.println();
-            String dirPath = Paths.get(serverConnection.getAbsolutePath(),serverConnection.getUser().getServerDir()).toString();
-            new FileTransfer(oisSocket, oosSocket, bytes, noBlocks,dirPath, fileName,true);
-            
-        } catch(IOException io) {
+            String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
+                    .toString();
+            new FileTransfer(oisSocket, oosSocket, bytes, noBlocks, dirPath, fileName, true);
+
+        } catch (IOException io) {
             io.printStackTrace();
-            serverConnection.constructAndSendReply("Server Error: "+io.getMessage(), "Internal Server Error");
+            serverConnection.constructAndSendReply("Server Error: " + io.getMessage(), "Internal Server Error");
         }
     }
 
     public void handleUpload(Request request) {
-        try(ServerSocket listenUploadSocket = new ServerSocket(0)) {
-            serverConnection.constructAndSendReply("PORT "+listenUploadSocket.getLocalPort(), "OK");
+        try (ServerSocket listenUploadSocket = new ServerSocket(0)) {
+            serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(), "OK");
             Socket uploadSocket = listenUploadSocket.accept();
             ObjectOutputStream oos = new ObjectOutputStream(uploadSocket.getOutputStream());
+            oos.flush();
             ObjectInputStream ois = new ObjectInputStream(uploadSocket.getInputStream());
             Reply rep = (Reply) ois.readObject();
             String fileMetaData = rep.getMessage();
@@ -128,14 +132,15 @@ public class CommandHandler {
             long byteSize = Integer.parseInt(fileDataSplit[3]);
             long blockNumber = Integer.parseInt(fileDataSplit[5]);
             System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", name, byteSize, blockNumber);
-            String dirPath = Paths.get(serverConnection.getAbsolutePath(),serverConnection.getUser().getServerDir()).toString();
-            new FileTransfer(ois, oos, byteSize, blockNumber, dirPath, name,false);
-        } catch(IOException io ) {
+            String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
+                    .toString();
+            new FileTransfer(ois, oos, byteSize, blockNumber, dirPath, name, false);
+        } catch (IOException io) {
             io.printStackTrace();
-        } catch(ClassNotFoundException cnf) {
+        } catch (ClassNotFoundException cnf) {
             cnf.printStackTrace();
         }
-        
+
     }
 
     public void login(Request request) {
@@ -190,15 +195,15 @@ public class CommandHandler {
         String[] sp = request.getMessage().split("\n", 2);
         String relativePath = "";
         // if it has no argument then we just get the user's last directory
-        System.out.println("Relative path: "+relativePath);
+        System.out.println("Relative path: " + relativePath);
         if (sp.length >= 2) {
             // else we need to add a relative part to the path
             relativePath = sp[1];
         }
         String currentPath = serverConnection.getUser().getServerDir();
-        System.out.println("Current path : "+currentPath);
+        System.out.println("Current path : " + currentPath);
         // ! we could do some verification here
-        Path p = Paths.get(serverConnection.getAbsolutePath(),currentPath, relativePath); 
+        Path p = Paths.get(serverConnection.getAbsolutePath(), currentPath, relativePath);
         // ! we shall not share the internal structure of the server with the clients!!!
 
         Reply reply = new Reply("Invalid path", "Internal Server Error"); // will not be changed if there is an error
@@ -230,12 +235,13 @@ public class CommandHandler {
         // if it has no argument then we just get the user's last directory
         if (sp.length >= 2) {
             // else we need to add a relative part to the path
-            relativePath =  sp[1];
+            relativePath = sp[1];
         } else {
             // go to the default directory
             relativePath = "";
         }
-        try (DirectoryStream<Path> dStream = Files.newDirectoryStream(Paths.get(serverConnection.getAbsolutePath(), relativePath))) {
+        try (DirectoryStream<Path> dStream = Files
+                .newDirectoryStream(Paths.get(serverConnection.getAbsolutePath(), relativePath))) {
             // just to make sure that this directory actually exists
             serverConnection.getUser().setServerDir(relativePath);
             serverConnection.getAuth().changeUsers(Operation.CHANGE, serverConnection.getUser());
