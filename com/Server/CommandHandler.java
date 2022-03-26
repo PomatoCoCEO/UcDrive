@@ -1,6 +1,9 @@
 package com.Server;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -13,6 +16,7 @@ import com.Server.auth.User;
 import com.Server.auth.Auth.Operation;
 import com.Server.conn.ServerConnection;
 import com.Server.except.AuthorizationException;
+import com.Server.file_transfer.FileTransfer;
 
 public class CommandHandler {
     Socket socket;
@@ -51,7 +55,52 @@ public class CommandHandler {
             case "CD":
                 handleCd(request);
                 break;
+            case "DOWNLOAD":
+                handleDownload(request);
+                break;
         }
+
+    }
+
+    public void handleDownload(Request request) {
+        String [] sp = request.getMessage().split("\n");
+        if(sp.length<2) {
+            serverConnection.constructAndSendReply("Not enough arguments", "Bad Request");
+            return;
+        }
+        try {
+            String fileName = sp[1];
+            Path absolutePath = Paths.get(serverConnection.getAbsolutePath(),serverConnection.getUser().getServerDir(), fileName);
+            String absolutePathString = absolutePath.toString();
+            File f = new File(absolutePathString);
+            if(!f.exists() || !f.isFile()) {
+                serverConnection.constructAndSendReply("Inexistent file", "Bad Request");
+                return;
+            }
+            serverConnection.constructAndSendReply("FILE EXISTS", "OK");
+            System.out.println("File exists sent");
+            Request portNoReq = serverConnection.getRequest();
+            System.out.println("Got answer port no"+portNoReq);
+            String[] msgPort = portNoReq.getMessage().split("\n");
+            if(msgPort.length<2||!msgPort[0].equals("PORT")) {
+                serverConnection.constructAndSendReply("Insufficient port information", "Bad Request");
+                return;
+            }
+            int portNo = Integer.parseInt(msgPort[1]);
+            System.out.println("Got port: "+portNo);
+            Socket sendSocket = new Socket(socket.getInetAddress(), portNo);
+            ObjectInputStream oisSocket = new ObjectInputStream(sendSocket.getInputStream());
+            ObjectOutputStream oosSocket = new ObjectOutputStream(sendSocket.getOutputStream());
+            oosSocket.flush();
+            long bytes = Files.size(absolutePath);
+            long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE) + (bytes % (FileTransfer.BLOCK_BYTE_SIZE)==0?0:1);
+            System.out.println();
+            new FileTransfer(oisSocket, oosSocket, bytes, noBlocks, absolutePathString);
+        } catch(IOException io) {
+            io.printStackTrace();
+            serverConnection.constructAndSendReply("Server Error: "+io.getMessage(), "Internal Server Error");
+        }
+    
 
     }
 

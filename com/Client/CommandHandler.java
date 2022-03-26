@@ -252,8 +252,8 @@ public class CommandHandler {
         try (ServerSocket serverSocket = new ServerSocket(0)) {
             // port dynamically allocated
             // !check if socket is valid
-            req.setMessage("PORT\n" + serverSocket.getLocalPort());
-            req.setToken(Client.getToken());
+            System.out.println("Acquired port: "+serverSocket.getLocalPort());
+            req = new Request("PORT\n" + serverSocket.getLocalPort(), Client.getToken());
             clientConnection.sendRequest(req);
             Socket receiver = serverSocket.accept();
             ObjectOutputStream oos = new ObjectOutputStream(receiver.getOutputStream());
@@ -272,9 +272,10 @@ public class CommandHandler {
             String name = fileDataSplit[1];
             int byteSize = Integer.parseInt(fileDataSplit[3]);
             int blockNumber = Integer.parseInt(fileDataSplit[5]);
+            System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", name, byteSize, blockNumber);
 
-            FileTransfer ft = new FileTransfer(ois, oos, byteSize, blockNumber, name);
-            ft.join(); // do we wait for the conclusion of the transfer?
+            new FileTransfer(ois, oos, byteSize, blockNumber, name);
+            // ft.join(); // do we wait for the conclusion of the transfer?
                        // ! dont think we do
         } catch (IOException io) {
             System.out.println("Problems trying to download: " + io.getMessage());
@@ -282,9 +283,6 @@ public class CommandHandler {
         } catch (ClassNotFoundException cnf) {
             System.out.println("Problems trying to download: " + cnf.getMessage());
             cnf.printStackTrace();
-        } catch (InterruptedException ie) {
-            System.out.println("Problems trying to download: " + ie.getMessage());
-            ie.printStackTrace();
         }
     }
 

@@ -12,23 +12,26 @@ import com.DataTransfer.Reply;
 public class FileTransfer extends Thread {
     private ObjectInputStream ois;
     private ObjectOutputStream oos;
-    private int byteSize, noBlocks;
-    private String fileName;
-    private final int BLOCK_BYTE_SIZE = 8192;
-    public FileTransfer (ObjectInputStream ois, ObjectOutputStream oos, int byteSize, int noBlocks, String fileName) {
+    private long byteSize, noBlocks;
+    private String absolutePath;
+    public static final int BLOCK_BYTE_SIZE = 8192;
+    public FileTransfer (ObjectInputStream ois, ObjectOutputStream oos, long byteSize, long noBlocks, String absolutePath) {
         this.ois = ois;
         this.oos = oos;
         this.byteSize = byteSize;
         this.noBlocks = noBlocks;
-        this.fileName = fileName;
+        this.absolutePath = absolutePath;
         this.start();
     }
 
     public void run() {
         try {
+            String fileName = absolutePath.substring(absolutePath.lastIndexOf("/")+1); // for linux and mac
+            if(fileName.indexOf("\\")!=-1) fileName = absolutePath.substring(absolutePath.lastIndexOf("\\")+1); // for windows
             Reply rep = new Reply("FILE\n" + fileName +"\nSIZE\n"+byteSize+"\nBLOCKS\n"+noBlocks, "OK");
             oos.writeObject(rep);
-            FileInputStream fis = new FileInputStream(new File(fileName));
+            oos.flush();
+            FileInputStream fis = new FileInputStream(new File(absolutePath));
             byte [] toSend = new byte[BLOCK_BYTE_SIZE];
             for(int i = 0; i< noBlocks; i++) {
                 int bytesToSend = fis.read(toSend);

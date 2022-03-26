@@ -15,10 +15,10 @@ import com.DataTransfer.FileChunk;
 public class FileTransfer extends Thread {
     private ObjectInputStream ois;
     private ObjectOutputStream oos;
-    private int byteSize, noBlocks;
+    private long byteSize, noBlocks;
     private String fileName;
 
-    public FileTransfer(ObjectInputStream ois, ObjectOutputStream oos, int byteSize, int noBlocks, String fileName) {
+    public FileTransfer(ObjectInputStream ois, ObjectOutputStream oos, long byteSize, long noBlocks, String fileName) {
         this.ois = ois;
         this.oos = oos;
         this.byteSize = byteSize;
@@ -29,10 +29,9 @@ public class FileTransfer extends Thread {
 
     public void run() {
         try {
-            String fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/'));
+            String fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/')+1);
             String filePath = Paths.get(Client.getClientDir(), fileNameWithoutDirectory).toString();
             File myObj = new File(filePath);
-            FileOutputStream fos = new FileOutputStream(myObj);
             if (myObj.createNewFile()) {
                 System.out.println("File created: " + myObj.getName());
             } else {
@@ -41,6 +40,7 @@ public class FileTransfer extends Thread {
 
                 System.out.println("File already exists.");
             }
+            FileOutputStream fos = new FileOutputStream(myObj);
             for (int i = 0; i < noBlocks; i++) {
 
                 // ! check last block size ??
@@ -53,6 +53,7 @@ public class FileTransfer extends Thread {
             fos.close();
             ois.close();
             oos.close();
+            System.out.println(fileName+" : transfer complete");
         } catch (IOException e) {
             System.out.println("An error occurred:");
             e.printStackTrace();
