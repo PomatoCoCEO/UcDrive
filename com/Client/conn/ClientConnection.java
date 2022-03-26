@@ -31,6 +31,16 @@ public class ClientConnection {
         }
     }
 
+    public void constructAndSendRequest(String message, String token) {
+        Request req = new Request(message,token);
+        try {
+            out.writeObject(req);
+            out.flush();
+        } catch (IOException io) {
+            io.printStackTrace();
+        }
+    }
+
     // ! to change
     public void constructAndSendReply(String message, String statusCode) {
         Reply reply = new Reply(message, statusCode);
@@ -51,6 +61,10 @@ public class ClientConnection {
             e.printStackTrace();
         }
         return reply;
+    }
+
+    public Socket getSocket() {
+        return socket;
     }
 
 }

@@ -10,11 +10,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.Client.conn.ClientConnection;
 import com.DataTransfer.FileChunk;
+import com.DataTransfer.FileTransfer;
 import com.DataTransfer.Reply;
 import com.DataTransfer.Request;
 import com.Server.conn.ServerConnection;
@@ -24,9 +26,11 @@ public class CommandHandler {
 
     Reply reply;
     ClientConnection clientConnection;
+    Socket socket;
 
-    public CommandHandler(ClientConnection clientConnection) {
+    public CommandHandler(ClientConnection clientConnection, Socket socket) {
         this.clientConnection = clientConnection;
+        this.socket = socket;
     }
 
     public void login(BufferedReader commandReader) {
@@ -194,9 +198,12 @@ public class CommandHandler {
                 sb.append('\n');
             }
             System.out.println(sb.toString());
-        } catch (IOException io) {
-            io.printStackTrace();
-        }
+        } catch(NoSuchFileException nsf) {
+            System.out.println("Directory not found: "+nsf.getMessage());
+        } 
+        catch (IOException io) {
+            System.out.println("Error: "+io.getMessage());
+        } 
 
     }
 
@@ -226,13 +233,19 @@ public class CommandHandler {
                     System.out.println("Invalid dir");
                     return;
                 }
-                clientDir.substring(0, lastSlash);
+                clientDir=clientDir.substring(0, lastSlash);
             } else {
                 clientDir = clientDir + "/" + p;
             }
         }
-        Client.setClientDir(clientDir);
-        System.out.println("new directory: " + clientDir);
+        Path p = Paths.get(clientDir);
+        if(Files.exists(p) && Files.isDirectory(p)) {
+            Client.setClientDir(clientDir);
+            System.out.println("new directory: " + clientDir);
+        }
+        else {
+            System.out.println("Error: directory not found");
+        }
     }
 
     public void downloadFile(String command) {
@@ -270,11 +283,11 @@ public class CommandHandler {
                 return;
             }
             String name = fileDataSplit[1];
-            int byteSize = Integer.parseInt(fileDataSplit[3]);
-            int blockNumber = Integer.parseInt(fileDataSplit[5]);
+            long byteSize = Integer.parseInt(fileDataSplit[3]);
+            long blockNumber = Integer.parseInt(fileDataSplit[5]);
             System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", name, byteSize, blockNumber);
 
-            new FileTransfer(ois, oos, byteSize, blockNumber, name);
+            new FileTransfer(ois, oos, byteSize, blockNumber, Client.getClientDir(), name,false);
             // ft.join(); // do we wait for the conclusion of the transfer?
                        // ! dont think we do
         } catch (IOException io) {
@@ -283,6 +296,43 @@ public class CommandHandler {
         } catch (ClassNotFoundException cnf) {
             System.out.println("Problems trying to download: " + cnf.getMessage());
             cnf.printStackTrace();
+        }
+    }
+
+    public void uploadFile(String command) {
+        String[] sp = command.split(" ",2);
+        if(sp.length<2) {
+            System.out.println("Invalid command. The structure is: upload <file_name>");
+        }
+        String fileName = sp[1];
+        try {
+            Path filePath = Paths.get(Client.getClientDir(), fileName);
+            if(!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+                System.out.println("File "+fileName+" not found");
+                return;
+            }
+            clientConnection.constructAndSendRequest("UPLOAD", Client.getToken());
+            Reply rep = clientConnection.getReply();
+            String[] portInfoSp = rep.getMessage().split(" ");
+            if(!portInfoSp[0].equals("PORT")) {
+                System.out.println("Problems uploading file: "+rep.getMessage());
+                return;
+            }
+            int portNo = Integer.parseInt(portInfoSp[1]);
+            Socket uploadSocket = new Socket(socket.getInetAddress(), portNo);
+            ObjectInputStream oisSocket = new ObjectInputStream(uploadSocket.getInputStream());
+            ObjectOutputStream oosSocket = new ObjectOutputStream(uploadSocket.getOutputStream());
+            oosSocket.flush();
+            long bytes = Files.size(filePath);
+            long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE) + (bytes % (FileTransfer.BLOCK_BYTE_SIZE)==0?0:1);
+            System.out.println();
+            new FileTransfer(oisSocket, oosSocket, bytes, noBlocks,Client.getClientDir(), fileName,true);
+        } catch(IOException io) {
+            System.out.println("Problems uploading file: "+io.getMessage());
+            io.printStackTrace();
+        } 
+        catch(Exception e) {
+            System.out.println("Problems uploading file: "+e.getMessage());
         }
     }
 
@@ -325,6 +375,7 @@ public class CommandHandler {
                 downloadFile(line);
                 break;
             case "upload":
+                uploadFile(line);
                 break;
             default:
                 System.out.println("Not a valid command");

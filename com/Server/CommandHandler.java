@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -16,7 +17,7 @@ import com.Server.auth.User;
 import com.Server.auth.Auth.Operation;
 import com.Server.conn.ServerConnection;
 import com.Server.except.AuthorizationException;
-import com.Server.file_transfer.FileTransfer;
+import com.DataTransfer.FileTransfer;
 
 public class CommandHandler {
     Socket socket;
@@ -58,6 +59,9 @@ public class CommandHandler {
             case "DOWNLOAD":
                 handleDownload(request);
                 break;
+            case "UPLOAD":
+                handleUpload(request);
+                break;
         }
 
     }
@@ -95,13 +99,43 @@ public class CommandHandler {
             long bytes = Files.size(absolutePath);
             long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE) + (bytes % (FileTransfer.BLOCK_BYTE_SIZE)==0?0:1);
             System.out.println();
-            new FileTransfer(oisSocket, oosSocket, bytes, noBlocks, absolutePathString);
+            String dirPath = Paths.get(serverConnection.getAbsolutePath(),serverConnection.getUser().getServerDir()).toString();
+            new FileTransfer(oisSocket, oosSocket, bytes, noBlocks,dirPath, fileName,true);
+            
         } catch(IOException io) {
             io.printStackTrace();
             serverConnection.constructAndSendReply("Server Error: "+io.getMessage(), "Internal Server Error");
         }
-    
+    }
 
+    public void handleUpload(Request request) {
+        try(ServerSocket listenUploadSocket = new ServerSocket(0)) {
+            serverConnection.constructAndSendReply("PORT "+listenUploadSocket.getLocalPort(), "OK");
+            Socket uploadSocket = listenUploadSocket.accept();
+            ObjectOutputStream oos = new ObjectOutputStream(uploadSocket.getOutputStream());
+            ObjectInputStream ois = new ObjectInputStream(uploadSocket.getInputStream());
+            Reply rep = (Reply) ois.readObject();
+            String fileMetaData = rep.getMessage();
+            String[] fileDataSplit = fileMetaData.split("\n");
+            if (fileDataSplit.length < 6 ||
+                    !fileDataSplit[0].equals("FILE") ||
+                    !fileDataSplit[2].equals("SIZE") ||
+                    !fileDataSplit[4].equals("BLOCKS")) {
+                System.err.println("Errors communicating with the server");
+                return;
+            }
+            String name = fileDataSplit[1];
+            long byteSize = Integer.parseInt(fileDataSplit[3]);
+            long blockNumber = Integer.parseInt(fileDataSplit[5]);
+            System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", name, byteSize, blockNumber);
+            String dirPath = Paths.get(serverConnection.getAbsolutePath(),serverConnection.getUser().getServerDir()).toString();
+            new FileTransfer(ois, oos, byteSize, blockNumber, dirPath, name,false);
+        } catch(IOException io ) {
+            io.printStackTrace();
+        } catch(ClassNotFoundException cnf) {
+            cnf.printStackTrace();
+        }
+        
     }
 
     public void login(Request request) {
