@@ -3,6 +3,7 @@ package com.DataTransfer;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
+import java.nio.file.Paths;
 
 public class UploadThread extends Thread {
 
@@ -31,7 +32,17 @@ public class UploadThread extends Thread {
         this.start();
     }
 
-    public void run () {
-        FileTransfer ft = new FileTransfer(ois, oos, )
+    public void run() {
+
+        try {
+            FileTransfer ft = new FileTransfer(ois, oos, byteSize, noBlocks, dirPath, fileName, false);
+            ft.join();
+            UDPTransfer udpt = new UDPTransfer(byteSize, noBlocks, absolutePath,
+                    Paths.get(dirPath, fileName).toString(), true, destinationAddress, destinationPort);
+            udpt.join();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }

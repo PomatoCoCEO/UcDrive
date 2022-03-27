@@ -87,48 +87,53 @@ public class UDPTransfer extends Thread {
             // for linux and mac
             // if(fileName.indexOf("\\")!=-1) fileName =
             // absolutePath.substring(absolutePath.lastIndexOf("\\")+1); // for windows
-            Reply rep = new Reply("FILE\n" + fileName + "\nSIZE\n" + byteSize + "\nBLOCKS\n" + noBlocks,
-                    ResponseStatus.OK.getStatus());
-            oos.writeObject(rep);
-            oos.flush();
+            DatagramSocket ds = new DatagramSocket();
+            String fileInfo = "FILE " + filePath + "\nSIZE " + byteSize + "\nBLOCKS " + noBlocks + "\nPORT "
+                    + ds.getPort();
+            sendString(ds, fileInfo);
 
-            do {
+            // read ok
+            // change destination port
+            byte[] reply = new byte[BLOCK_BYTE_SIZE];
+            DatagramPacket dp = new DatagramPacket(reply, reply.length);
+            ds.receive(dp);
+            destinationPort = dp.getPort();
 
-                MessageDigest md = MessageDigest.getInstance("MD5");
-                FileInputStream fis = new FileInputStream(new File(Paths.get(dirPath, fileName).toString()));
-                DigestInputStream dis = new DigestInputStream(fis, md);
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            FileInputStream fis = new FileInputStream(new File(filePath));
+            DigestInputStream dis = new DigestInputStream(fis, md);
 
-                byte[] toSend = new byte[BLOCK_BYTE_SIZE];
-                for (int i = 0; i < noBlocks; i++) {
-                    int bytesToSend = dis.read(toSend);
+            byte[][] cache = new byte[NO_BLOCKS_TRANSFER][BLOCK_BYTE_SIZE];
+            int[] lengths = new int[NO_BLOCKS_TRANSFER];
+            int blocksSent = 0;
+            boolean newInfo = true;
 
-                    FileChunk fc = new FileChunk(Arrays.copyOf(toSend, bytesToSend));
-                    oos.writeObject(fc);
-                    oos.flush();
+            while (blocksSent < noBlocks) {
+
+                for (int i = 0; i < Math.min(noBlocks - blocksSent, NO_BLOCKS_TRANSFER); i++) {
+                    if (newInfo) {
+                        lengths[i] = dis.read(cache[i]);
+                    }
+                    DatagramPacket dpBlock = new DatagramPacket(cache[i], lengths[i], destinationAddress,
+                            destinationPort);
+                    ds.send(dpBlock);
                 }
-                byte[] digest = md.digest();
 
-                String result = "";
-
-                for (int i = 0; i < digest.length; i++) {
-                    result += Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1);
+                String md5Secondary = new String(receiveBytes(ds, (int) BLOCK_BYTE_SIZE));
+                String md5Result = calculateMD5(md);
+                if (!md5Result.equals(md5Secondary)) {
+                    newInfo = false;
+                    sendString(ds, "ERROR MD5");
+                } else {
+                    newInfo = true;
+                    sendString(ds, "OK");
                 }
-                System.out.println("MD5 result: " + result);
+            }
 
-                rep = new Reply(result, ResponseStatus.OK.getStatus());
-                oos.writeObject(rep);
-                oos.flush();
-
-                rep = (Reply) ois.readObject();
-
-            } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
-            System.out.println("MD5 match");
+            System.out.println("Udp transfer complete");
         } catch (IOException io) {
             io.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
