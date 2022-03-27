@@ -12,6 +12,8 @@ public class SecondaryHeartbeat extends Heartbeat {
     }
 
     public void run() {
+        secondaryHeartbeat();
+        /* 
         boolean sec_before = false;
         while (true) {
             if (primary) {
@@ -21,7 +23,7 @@ public class SecondaryHeartbeat extends Heartbeat {
                 sec_before = true;
 
             }
-        }
+        }*/
     }
 
 }

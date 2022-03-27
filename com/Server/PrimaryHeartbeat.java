@@ -1,26 +1,19 @@
 package com.Server;
 
 import java.net.DatagramSocket;
+import com.Server.Heartbeat;
 
 import com.Server.config.ConfigServer;
 
 public class PrimaryHeartbeat extends Heartbeat {
-    public PrimaryHeartbeat(DatagramSocket ds, ConfigServer cs) {
+    private boolean isSecondary;
+    public PrimaryHeartbeat(DatagramSocket ds, ConfigServer cs, boolean isSecondary) {
         super(ds, cs);
+        this.isSecondary = false;
         this.start();
-
     }
 
     public void run() {
-        boolean sec_before = false;
-        while (true) {
-            if (primary) {
-                primary = primaryHeartbeat(sec_before);
-            } else {
-                primary = secondaryHeartbeat();
-                sec_before = true;
-
-            }
-        }
+        primaryHeartbeat(isSecondary);
     }
 }

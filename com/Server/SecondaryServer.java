@@ -28,8 +28,22 @@ public class SecondaryServer extends Server {
             ConfigServer primaryServerConfig = new ConfigServer("com/Server/runfiles/Pconfig");
             DatagramSocket ds = new DatagramSocket();
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
-
+            SecondaryHeartbeat sh = new SecondaryHeartbeat(ds, primaryServerConfig);
+            UDPAccept udpAccept = new UDPAccept(this); // we need to use our config
+            // here we should make another thread to accept the dup connections
+            sh.join();
+            udpAccept.interrupt(); 
+            // after the server knows it will replace the primary server 
+            // it should kill the file receipt thread
+            udpAccept.join();
+            PrimaryHeartbeat ph = new PrimaryHeartbeat(ds, primaryServerConfig, true); 
+            TCPAccept ta = new TCPAccept(this);
+            ph.join();
+            // ! we might need to check the value of isSecondary in this call
         } catch (SocketException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -37,28 +51,9 @@ public class SecondaryServer extends Server {
         // send I AM SECONDARY
         // create heartbeat thread
         // create receive files thread that shuts down if server becomes primary
-        // if PRIMARY does not responde 5 times to heartbeat, become primary and start
+        // if PRIMARY does not respond 5 times to heartbeat, become primary and start
         // sending I AM PRIMARY
         // and start listening to TCP connections
-
-        try {
-            System.out.println("Current directory: " + System.getProperty("user.dir"));
-            absolutePath = System.getProperty("user.dir") + "/com/Server/data";
-            Auth authenticationInfo = new Auth("com/Server/runfiles/users");
-            ConfigServer config = new ConfigServer("com/Server/runfiles/Sconfig");
-            ServerSocket listenSocket = new ServerSocket(config.getTcpSocketPort());
-            System.out.println("LISTEN SOCKET=" + listenSocket);
-            while (true) {
-                Socket clientSocket = listenSocket.accept(); // BLOQUEANTE
-                System.out.println("CLIENT_SOCKET (created at accept())=" + clientSocket);
-                new ServerConnection(clientSocket, authenticationInfo, absolutePath);
-            }
-
-        } catch (IOException io) {
-            io.printStackTrace();
-            return;
-        }
-
     }
 
     public static void main(String[] args) {

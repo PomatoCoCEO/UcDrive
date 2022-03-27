@@ -15,6 +15,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.ServerError;
 
 public class Server {
     protected ServerSocket serverSocket;
@@ -84,4 +85,18 @@ public class Server {
     public String getAbsolutePath() {
         return absolutePath;
     }
+
+    public ServerSocket getServerSocket() {
+        return serverSocket;
+    }
+    
+    public Auth getAuthInfo() {
+        return authenticationInfo;
+    }
+
+    public ConfigServer getConfig() {
+        return config;
+    }
+    
+
 }

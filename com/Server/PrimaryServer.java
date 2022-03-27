@@ -43,7 +43,7 @@ public class PrimaryServer extends Server {
                         break;
                     } else {
                         // act like a primary server
-                        PrimaryHeartbeat phb = new PrimaryHeartbeat(ds, secondaryServerConfig);
+                        PrimaryHeartbeat phb = new PrimaryHeartbeat(ds, secondaryServerConfig ,false);
                         // go to tcp
                         break;
                     }
@@ -56,12 +56,20 @@ public class PrimaryServer extends Server {
                     io.printStackTrace();
                 }
             }
-            if (isCurrentlyPrimary)
-                acceptTcp();
+            if (isCurrentlyPrimary) {
+                TCPAccept ta = new TCPAccept(this);
+                ta.join();
+                // acceptTcp();
+            }
             else {
-                // accept udp stuff
+                UDPAccept ua = new UDPAccept(this);
+                ua.join();
+                // acceptUdp();
             }
         } catch (SocketException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

@@ -19,13 +19,15 @@ public class Heartbeat extends Thread {
     }
 
     public boolean secondaryHeartbeat() {
-
         // send I AM SECONDARY
         int noFailedHeartbeats = 0;
         String message = "I AM SECONDARY";
         while (noFailedHeartbeats < ALLOWED_HEARTBEAT_FAILURES) {
             DatagramPacket request = new DatagramPacket(message.getBytes(), message.length(), cs.getServerAddress(),
                     cs.getUdpHeartbeatPort());
+            System.out.println("Secondary server heartbeat");
+            System.out.println("Sending datagram to port "+request.getPort()+
+                    ", address "+request.getAddress()+", content "+request.getData());
             try {
                 ds.send(request);
                 byte[] buffer = new byte[1000];
@@ -36,6 +38,7 @@ public class Heartbeat extends Thread {
                 }
             } catch (SocketTimeoutException ste) {
                 noFailedHeartbeats++;
+                System.out.println("Heartbeats failed: "+noFailedHeartbeats);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -57,20 +60,19 @@ public class Heartbeat extends Thread {
             DatagramPacket request = new DatagramPacket(message.getBytes(), message.length(), cs.getServerAddress(),
                     cs.getUdpHeartbeatPort());
             try {
+                System.out.println("Sending datagram to port "+request.getPort()+
+                        ", address "+request.getAddress()+", content "+request.getData());
                 ds.send(request);
-
                 byte[] buffer = new byte[1000];
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                 ds.receive(reply);
                 noFailedHeartbeats = 0;
-
                 if ((new String(reply.getData())).equals("I AM PRIMARY") && !isSecondary && !secondaryActivity) {
                     message = "I AM SECONDARY";
                     secondaryActivity = true;
                     return false;
                     // create Receive udp files
                 }
-
             } catch (SocketTimeoutException ste) {
                 if (isSecondary)
                     System.out.println("Primary server not restored yet");
@@ -95,5 +97,7 @@ public class Heartbeat extends Thread {
     public void setDs(DatagramSocket ds) {
         this.ds = ds;
     }
+
+    public void run() {}
 
 }

@@ -146,7 +146,6 @@ public class CommandHandler {
     }
 
     public void login(Request request) {
-        String response;
         Reply reply;
         boolean authenticated = false;
         boolean first = true;
