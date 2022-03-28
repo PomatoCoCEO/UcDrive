@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -13,10 +11,6 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-
-import com.Client.Client;
-import com.enums.ResponseStatus;
 
 public class UDPTransfer extends Thread {
 
@@ -89,7 +83,7 @@ public class UDPTransfer extends Thread {
             // absolutePath.substring(absolutePath.lastIndexOf("\\")+1); // for windows
             DatagramSocket ds = new DatagramSocket();
             String fileInfo = "FILE " + filePath + "\nSIZE " + byteSize + "\nBLOCKS " + noBlocks + "\nPORT "
-                    + ds.getPort();
+                    + destinationPort;
             sendString(ds, fileInfo);
 
             // read ok
@@ -100,7 +94,8 @@ public class UDPTransfer extends Thread {
             destinationPort = dp.getPort();
 
             MessageDigest md = MessageDigest.getInstance("MD5");
-            FileInputStream fis = new FileInputStream(new File(filePath));
+            String fileCompletePath = Paths.get(absolutePath, filePath).toString();
+            FileInputStream fis = new FileInputStream(new File(fileCompletePath));
             DigestInputStream dis = new DigestInputStream(fis, md);
 
             byte[][] cache = new byte[NO_BLOCKS_TRANSFER][BLOCK_BYTE_SIZE];
@@ -131,6 +126,7 @@ public class UDPTransfer extends Thread {
             }
 
             System.out.println("Udp transfer complete");
+            dis.close();
         } catch (IOException io) {
             io.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
@@ -159,6 +155,8 @@ public class UDPTransfer extends Thread {
             FileOutputStream fos = new FileOutputStream(myObj);
             MessageDigest md = MessageDigest.getInstance("MD5"), clone;
             byte[][] cache = new byte[NO_BLOCKS_TRANSFER][BLOCK_BYTE_SIZE];
+            System.out.println("Blocks read: "+blocksRead);
+            System.out.println("noBlocks: "+ noBlocks);
             while (blocksRead < noBlocks) {
                 clone = (MessageDigest) md.clone();
                 for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
@@ -181,7 +179,7 @@ public class UDPTransfer extends Thread {
                 } else { // SENDS "ERROR MD5"
                     md = clone;
                     System.out.println("Error in udp transfer, trying again");
-
+                    Thread.sleep(1000);
                 }
 
             }

@@ -22,16 +22,20 @@ public class Server {
     protected String absolutePath;
     protected final static int SOCKET_TIMEOUT_MILLISECONDS = 5000;
     protected Auth authenticationInfo;
-    protected ConfigServer config;
+    protected ConfigServer ownConfig;
+    protected ConfigServer redundantConfig;
     
 
-    public Server(String configFile) {
+    public Server(String ownConfigFile, String otherConfigFile) {
         try {
             System.out.println("Current directory: " + System.getProperty("user.dir"));
 
             authenticationInfo = new Auth("com/Server/runfiles/users");
-            config = new ConfigServer("com/Server/runfiles/" + configFile);
-            serverSocket = new ServerSocket(config.getTcpSocketPort());
+            ownConfig = new ConfigServer("com/Server/runfiles/" + ownConfigFile);
+            redundantConfig = new ConfigServer("com/Server/runfiles/" + otherConfigFile);
+            System.out.println("Server's own config: "+ownConfig);
+            System.out.println("Server's mate config: "+redundantConfig);
+            serverSocket = new ServerSocket(ownConfig.getTcpSocketPort());
             System.out.println("LISTEN SOCKET=" + serverSocket);
         } catch (IOException io) {
             io.printStackTrace();
@@ -44,7 +48,7 @@ public class Server {
             while (true) {
                 Socket clientSocket = serverSocket.accept(); // BLOQUEANTE
                 System.out.println("CLIENT_SOCKET (created at accept())=" + clientSocket);
-                new ServerConnection(clientSocket, authenticationInfo, absolutePath);
+                new ServerConnection(clientSocket, this);
             }
         } catch (IOException io) {
             io.printStackTrace();
@@ -55,7 +59,7 @@ public class Server {
     protected void acceptUdp() {
         // TODO: accept udp connections for file updating
         try {
-            DatagramSocket ds = new DatagramSocket(config.getUdpFileTransferPort());
+            DatagramSocket ds = new DatagramSocket(ownConfig.getUdpFileTransferPort());
             while (true) {
                 try {
                     byte[] buffer = new byte[1000];
@@ -96,7 +100,11 @@ public class Server {
     }
 
     public ConfigServer getConfig() {
-        return config;
+        return ownConfig;
+    }
+
+    public ConfigServer getDestinationConfig() {
+        return redundantConfig;
     }
     
 

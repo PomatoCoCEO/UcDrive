@@ -7,6 +7,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import com.Server.CommandHandler;
+import com.Server.Server;
 import com.Server.auth.*;
 import com.Server.except.AuthorizationException;
 import com.DataTransfer.Reply;
@@ -20,12 +21,14 @@ public class ServerConnection extends Thread {
     private ObjectOutputStream out;
     private Auth auth;
     private User user;
+    private Server server;
     private String absolutePath;
 
-    public ServerConnection(Socket socket, Auth auth, String absolutePath) throws IOException {
+    public ServerConnection(Socket socket, Server server) throws IOException {
         this.socket = socket;
-        this.auth = auth;
-        this.absolutePath = absolutePath;
+        this.auth = server.getAuthInfo();
+        this.absolutePath = server.getAbsolutePath();
+        this.server=server;
         out = new ObjectOutputStream(socket.getOutputStream());
         out.flush();
         in = new ObjectInputStream(socket.getInputStream());
@@ -115,5 +118,9 @@ public class ServerConnection extends Thread {
             e.printStackTrace();
         }
         return req;
+    }
+
+    public Server getServer() {
+        return server;
     }
 }

@@ -24,8 +24,9 @@ public class UDPAccept extends Thread {
                     byte[] buffer = new byte[1000];
                     DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                     ds.receive(reply); // no timeout here, this socket is waiting for connections
-                    String message = new String(reply.getData()); // FILE <FILE_PATH>\nSIZE <BYTE_SIZE>\nBLOCKS
+                    String message = new String(reply.getData()).trim(); // FILE <FILE_PATH>\nSIZE <BYTE_SIZE>\nBLOCKS
                                                                   // <BLOCKS>\nPORT <PORT_NUMBER>
+                    System.out.println("Message: "+message);
                     String[] elements = message.split("\n");
                     String filePath = elements[0].split(" ", 2)[1];
                     long size = Long.parseLong(elements[1].split(" ", 2)[1]);

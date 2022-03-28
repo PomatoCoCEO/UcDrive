@@ -62,4 +62,9 @@ public class ConfigServer {
         this.udpHeartbeatPort = udpHeartbeatPort;
     }
 
+    public String toString () {
+        return "Config: ip address "+serverAddress.toString()+";\nudp file port "+udpFileTransferPort+
+            ";\nudp heartbeat port "+udpHeartbeatPort+";\ntcp socket port "+tcpSocketPort;
+    }
+
 }

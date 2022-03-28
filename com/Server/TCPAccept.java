@@ -10,6 +10,7 @@ public class TCPAccept extends Thread {
 
     public TCPAccept(Server server) {
         this.server = server;
+        this.start();
     }
 
     public void run () {
@@ -21,7 +22,7 @@ public class TCPAccept extends Thread {
             while (true) {
                 Socket clientSocket = server.getServerSocket().accept(); // BLOQUEANTE
                 System.out.println("CLIENT_SOCKET (created at accept())=" + clientSocket);
-                new ServerConnection(clientSocket, server.getAuthInfo(), server.getAbsolutePath());
+                new ServerConnection(clientSocket, server);
             }
         } catch (IOException io) {
             io.printStackTrace();

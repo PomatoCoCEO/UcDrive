@@ -48,6 +48,7 @@ public class Client {
             System.out.println("Enter command: (help for more info)");
             while (true) {
                 try {
+                    System.out.print(serverDir+"$ ");
                     command = commandReader.readLine().trim();
                     if (commandHandler.handleCommand(command, commandReader)) // true when command == exit
                         break;

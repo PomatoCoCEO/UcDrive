@@ -16,8 +16,8 @@ import java.nio.file.Paths;
 
 public class SecondaryServer extends Server {
 
-    public SecondaryServer(String configFile) {
-        super(configFile);
+    public SecondaryServer(String ownConfigFile, String otherConfigFile) {
+        super(ownConfigFile, otherConfigFile);
     }
 
     public void work() {
@@ -25,9 +25,10 @@ public class SecondaryServer extends Server {
         absolutePath = System.getProperty("user.dir") + "/com/Server/secondary/data";
 
         try {
-            ConfigServer primaryServerConfig = new ConfigServer("com/Server/runfiles/Pconfig");
+            ConfigServer primaryServerConfig = getDestinationConfig();
+            // new ConfigServer("com/Server/runfiles/Pconfig");
             
-            DatagramSocket ds = new DatagramSocket(config.getUdpHeartbeatPort());
+            DatagramSocket ds = new DatagramSocket(ownConfig.getUdpHeartbeatPort());
             //! this socket should also be determined statically
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
             SecondaryHeartbeat sh = new SecondaryHeartbeat(ds, primaryServerConfig);
@@ -41,6 +42,7 @@ public class SecondaryServer extends Server {
             PrimaryHeartbeat ph = new PrimaryHeartbeat(ds, primaryServerConfig, true); 
             TCPAccept ta = new TCPAccept(this);
             ph.join();
+            ta.join();
             // ! we might need to check the value of isSecondary in this call
             // ds.close();
         } catch (SocketException e) {
@@ -60,7 +62,7 @@ public class SecondaryServer extends Server {
     }
 
     public static void main(String[] args) {
-        SecondaryServer ss = new SecondaryServer("Sconfig");
+        SecondaryServer ss = new SecondaryServer("Sconfig","Pconfig");
         ss.work();
 
     }

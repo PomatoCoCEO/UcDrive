@@ -13,8 +13,10 @@ import java.nio.file.Paths;
 
 import com.DataTransfer.Reply;
 import com.DataTransfer.Request;
+import com.DataTransfer.UDPTransfer;
 import com.Server.auth.User;
 import com.Server.auth.Auth.Operation;
+import com.Server.config.ConfigServer;
 import com.Server.conn.ServerConnection;
 import com.Server.except.AuthorizationException;
 import com.enums.ResponseStatus;
@@ -136,11 +138,23 @@ public class CommandHandler {
             System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", name, byteSize, blockNumber);
             String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
                     .toString();
-            new FileTransfer(ois, oos, byteSize, blockNumber, dirPath, name, false);
+            FileTransfer ft = new FileTransfer(ois, oos, byteSize, blockNumber, dirPath, name, false);
+            ft.join();
+            String path = Paths.get(serverConnection.getUser().getServerDir(),name).toString();
+            ConfigServer secondaryConfig = serverConnection.getServer().getDestinationConfig();
+            System.out.println("Secondary config: "+secondaryConfig);
+            System.out.println("byte size: "+byteSize);
+            System.out.println("noBlocks: "+blockNumber);
+            
+            UDPTransfer udp = new UDPTransfer(byteSize, blockNumber, serverConnection.getAbsolutePath(), path ,  
+                true, secondaryConfig.getServerAddress(), secondaryConfig.getUdpFileTransferPort());
         } catch (IOException io) {
             io.printStackTrace();
         } catch (ClassNotFoundException cnf) {
             cnf.printStackTrace();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
     }

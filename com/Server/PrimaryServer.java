@@ -18,15 +18,15 @@ import java.nio.file.Paths;
 
 public class PrimaryServer extends Server {
 
-    public PrimaryServer(String configFile) {
-        super(configFile);
+    public PrimaryServer(String ownConfigFile, String otherConfigFile) {
+        super(ownConfigFile, otherConfigFile);
     }
 
     public void work() {
         absolutePath = System.getProperty("user.dir") + "/com/Server/primary/data";
         try {
             ConfigServer secondaryServerConfig = new ConfigServer("com/Server/runfiles/Sconfig");
-            DatagramSocket ds = new DatagramSocket(config.getUdpHeartbeatPort()); 
+            DatagramSocket ds = new DatagramSocket(ownConfig.getUdpHeartbeatPort()); 
             //! here the port must be the one in the configuration
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
             byte[] buffer = new byte[1000];
@@ -77,7 +77,9 @@ public class PrimaryServer extends Server {
     }
 
     public static void main(String[] args) {
-        PrimaryServer ps = new PrimaryServer("Pconfig");
+        PrimaryServer ps = new PrimaryServer("Pconfig", "Sconfig"); 
+        // one configuration is relative to the server itself, 
+        // the other is relative to the secondary server
         ps.work();
 
         // read single heartbeat
