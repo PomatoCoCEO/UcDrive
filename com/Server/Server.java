@@ -23,6 +23,7 @@ public class Server {
     protected final static int SOCKET_TIMEOUT_MILLISECONDS = 5000;
     protected Auth authenticationInfo;
     protected ConfigServer config;
+    
 
     public Server(String configFile) {
         try {

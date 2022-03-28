@@ -26,15 +26,15 @@ public class PrimaryServer extends Server {
         absolutePath = System.getProperty("user.dir") + "/com/Server/primary/data";
         try {
             ConfigServer secondaryServerConfig = new ConfigServer("com/Server/runfiles/Sconfig");
-            DatagramSocket ds = new DatagramSocket();
-
+            DatagramSocket ds = new DatagramSocket(config.getUdpHeartbeatPort()); 
+            //! here the port must be the one in the configuration
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
             byte[] buffer = new byte[1000];
             boolean isCurrentlyPrimary = true;
             while (true) {
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                 try {
-                    ds.receive(reply);
+                    ds.receive(reply); // receives in the specified socket
                     if ((new String(reply.getData())).equals("I AM PRIMARY")) {
                         // act like a secondary server
                         new SecondaryHeartbeat(ds, secondaryServerConfig);
@@ -66,6 +66,7 @@ public class PrimaryServer extends Server {
                 ua.join();
                 // acceptUdp();
             }
+            // ds.close();
         } catch (SocketException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

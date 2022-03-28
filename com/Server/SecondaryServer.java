@@ -26,7 +26,9 @@ public class SecondaryServer extends Server {
 
         try {
             ConfigServer primaryServerConfig = new ConfigServer("com/Server/runfiles/Pconfig");
-            DatagramSocket ds = new DatagramSocket();
+            
+            DatagramSocket ds = new DatagramSocket(config.getUdpHeartbeatPort());
+            //! this socket should also be determined statically
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
             SecondaryHeartbeat sh = new SecondaryHeartbeat(ds, primaryServerConfig);
             UDPAccept udpAccept = new UDPAccept(this); // we need to use our config
@@ -40,6 +42,7 @@ public class SecondaryServer extends Server {
             TCPAccept ta = new TCPAccept(this);
             ph.join();
             // ! we might need to check the value of isSecondary in this call
+            // ds.close();
         } catch (SocketException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

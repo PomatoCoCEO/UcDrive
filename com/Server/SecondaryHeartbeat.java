@@ -6,8 +6,10 @@ import com.Server.config.ConfigServer;
 
 public class SecondaryHeartbeat extends Heartbeat {
     public SecondaryHeartbeat(DatagramSocket ds, ConfigServer cs) {
+
         super(ds, cs);
         this.primary = false;
+        System.out.printf("Secondary heartbeat: ip %s , port %d\n", cs.getServerAddress(), cs.getUdpHeartbeatPort());
         this.start();
     }
 
