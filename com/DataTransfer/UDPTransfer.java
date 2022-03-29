@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class UDPTransfer extends Thread {
 
@@ -114,14 +115,16 @@ public class UDPTransfer extends Thread {
                     ds.send(dpBlock);
                 }
 
-                String md5Secondary = new String(receiveBytes(ds, (int) BLOCK_BYTE_SIZE));
+                String md5Secondary = new String(receiveBytes(ds, (int) BLOCK_BYTE_SIZE)).trim();
                 String md5Result = calculateMD5(md);
                 if (!md5Result.equals(md5Secondary)) {
                     newInfo = false;
                     sendString(ds, "ERROR MD5");
+                    System.out.println("DIFFERENT MD5 "+md5Secondary+" "+md5Result);
                 } else {
                     newInfo = true;
                     sendString(ds, "OK");
+                    blocksSent += NO_BLOCKS_TRANSFER;
                 }
             }
 
@@ -155,31 +158,42 @@ public class UDPTransfer extends Thread {
             FileOutputStream fos = new FileOutputStream(myObj);
             MessageDigest md = MessageDigest.getInstance("MD5"), clone;
             byte[][] cache = new byte[NO_BLOCKS_TRANSFER][BLOCK_BYTE_SIZE];
+            int[] lengths = new int[NO_BLOCKS_TRANSFER];
             System.out.println("Blocks read: "+blocksRead);
             System.out.println("noBlocks: "+ noBlocks);
             while (blocksRead < noBlocks) {
                 clone = (MessageDigest) md.clone();
                 for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
-
+                    // int aid = 
                     DatagramPacket reply = new DatagramPacket(cache[i], cache[i].length);
                     ds.receive(reply); // no timeout here, this socket is waiting for connections
-
-                    md.update(cache[i], 0, cache[i].length);
-
+                    lengths[i] = reply.getLength();
+                    long aid = byteSize-(blocksRead-i)*BLOCK_BYTE_SIZE;
+                    md.update(cache[i], 0, reply.getLength());
                 }
                 String md5 = calculateMD5(md);
                 sendString(ds, md5);
-                String ans = new String(receiveBytes(ds, BLOCK_BYTE_SIZE));
+                String ans = new String(receiveBytes(ds, BLOCK_BYTE_SIZE)).trim();
                 if (ans.equals("OK")) {
                     for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
-                        fos.write(cache[i]);
+                        if (lengths[i] < BLOCK_BYTE_SIZE) {
+                            byte [] toCopy = Arrays.copyOf(cache[i], lengths[i]);
+                            fos.write(toCopy);
+                        }
+                        else fos.write(cache[i]);
                         fos.flush();
                     }
                     blocksRead += Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER);
                 } else { // SENDS "ERROR MD5"
                     md = clone;
+                    System.out.println("Message: "+ans);
                     System.out.println("Error in udp transfer, trying again");
-                    Thread.sleep(1000);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
                 }
 
             }
