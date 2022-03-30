@@ -322,8 +322,9 @@ public class CommandHandler {
                 System.out.println("File " + fileName + " not found");
                 return;
             }
-
-            new ClientUpload(fileName,clientConnection, socket.getInetAddress());
+            clientConnection.constructAndSendRequest("UPLOAD", Client.getToken());
+            Reply rep = clientConnection.getReply();
+            new ClientUpload(fileName, rep.getMessage() , socket.getInetAddress());
         } catch (Exception e) {
             System.out.println("Problems uploading file: " + e.getMessage());
         }

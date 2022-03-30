@@ -22,15 +22,16 @@ import com.Client.conn.ClientConnection;
 import com.enums.ResponseStatus;
 
 public class ClientUpload extends Thread{
-    String fileName;
-    ClientConnection clientConnection;
+    private String fileName;
+    private String replyWithPort;
     private InetAddress address;
     public static final int BLOCK_BYTE_SIZE = 8192;
     
-    public ClientUpload(String fileName, ClientConnection clientConnection, InetAddress address) {
+    public ClientUpload(String fileName, String replyWithPort, InetAddress address) {
         this.fileName = fileName;
-        this.clientConnection = clientConnection;
+        this.replyWithPort = replyWithPort;
         this.address= address;
+        this.start();
     }
 
     
@@ -61,11 +62,10 @@ public class ClientUpload extends Thread{
 
     private void sendFile() throws SocketTimeoutException, SocketException {
         try {
-            clientConnection.constructAndSendRequest("UPLOAD", Client.getToken());
-            Reply rep = clientConnection.getReply();
-            String[] portInfoSp = rep.getMessage().split(" ");
+            
+            String[] portInfoSp = replyWithPort.split(" ");
             if (!portInfoSp[0].equals("PORT")) {
-                System.out.println("Problems uploading file: " + rep.getMessage());
+                System.out.println("Problems uploading file: " + replyWithPort);
                 return;
             }
             int portNo = Integer.parseInt(portInfoSp[1]);
@@ -80,7 +80,7 @@ public class ClientUpload extends Thread{
             System.out.println();
 
 
-            rep = new Reply("FILE\n" + fileName + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
+            Reply rep = new Reply("FILE\n" + fileName + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
                     ResponseStatus.OK.getStatus());
             System.out.println("Sending reply with file metadata: "+rep);
             oos.writeObject(rep);

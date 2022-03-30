@@ -119,10 +119,13 @@ public class CommandHandler {
     public void handleUpload() {
         try{
             ServerSocket listenUploadSocket = new ServerSocket(0);
+            System.out.println("New port opened for file transfer: "+ listenUploadSocket.getLocalPort());
             serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(),
                         ResponseStatus.OK.getStatus());
             FileUploadTask fut = new FileUploadTask(serverConnection,listenUploadSocket);
             serverConnection.getServer().getQueueFileRcv().add(fut);
+            System.out.println("Added to quuuuuuuuuue");
+
         } catch(IOException e) {
             e.printStackTrace();
         }
