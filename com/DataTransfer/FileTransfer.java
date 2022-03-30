@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -13,20 +15,31 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 import com.Client.Client;
+import com.Server.Server;
 import com.enums.ResponseStatus;
 
 public class FileTransfer extends Thread {
-    private ObjectInputStream ois;
-    private ObjectOutputStream oos;
-    private long byteSize, noBlocks;
-    private String dirPath, fileName;
+    protected ObjectInputStream ois;
+    protected ObjectOutputStream oos;
+    protected long byteSize, noBlocks;
+    protected String dirPath, fileName;
     public static final int BLOCK_BYTE_SIZE = 8192;
-    private boolean send;
+    protected boolean send;
 
-    public FileTransfer(ObjectInputStream ois, ObjectOutputStream oos, long byteSize, long noBlocks, String dirPath,
+    public FileTransfer(){
+    
+    }
+
+    public FileTransfer(InetAddress ipAddress, int port, long byteSize, long noBlocks, String dirPath,
             String fileName, boolean send) {
-        this.ois = ois;
-        this.oos = oos;
+        try {
+            Socket s = new Socket(ipAddress, port);
+            this.oos = new ObjectOutputStream(s.getOutputStream());
+            oos.flush();
+            this.ois = new ObjectInputStream(s.getInputStream());
+        } catch(IOException io) {
+            io.printStackTrace();
+        }
         this.byteSize = byteSize;
         this.noBlocks = noBlocks;
         this.dirPath = dirPath;
@@ -44,12 +57,10 @@ public class FileTransfer extends Thread {
 
     private void sendFile() {
         try {
-            // String fileName = absolutePath.substring(absolutePath.lastIndexOf("/")+1); //
-            // for linux and mac
-            // if(fileName.indexOf("\\")!=-1) fileName =
-            // absolutePath.substring(absolutePath.lastIndexOf("\\")+1); // for windows
+
             Reply rep = new Reply("FILE\n" + fileName + "\nSIZE\n" + byteSize + "\nBLOCKS\n" + noBlocks,
                     ResponseStatus.OK.getStatus());
+            System.out.println("Sending reply with file metadata: "+rep);
             oos.writeObject(rep);
             oos.flush();
 
@@ -81,6 +92,7 @@ public class FileTransfer extends Thread {
                 oos.flush();
 
                 rep = (Reply) ois.readObject();
+                System.out.println("pos readobj: " + rep.getMessage());
 
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
             System.out.println("MD5 match");
@@ -95,13 +107,14 @@ public class FileTransfer extends Thread {
         }
     }
 
-    private void receiveFile() {
+    protected void receiveFile() {
         try {
             Reply rep;
+            String filePath;
             do {
 
                 String fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/') + 1);
-                String filePath = Paths.get(dirPath, fileNameWithoutDirectory).toString();
+                filePath = Paths.get(dirPath, fileNameWithoutDirectory).toString();
                 File myObj = new File(filePath);
                 if (myObj.createNewFile()) {
                     System.out.println("File created: " + myObj.getName());
@@ -150,6 +163,8 @@ public class FileTransfer extends Thread {
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
 
             System.out.println(fileName + " : transfer complete");
+            // ! add to blocking queue
+            
             ois.close();
             oos.close();
         } catch (IOException e) {

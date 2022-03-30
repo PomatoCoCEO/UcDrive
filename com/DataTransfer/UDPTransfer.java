@@ -37,6 +37,17 @@ public class UDPTransfer extends Thread {
         this.start();
     }
 
+    public UDPTransfer(UDPFileTransferTask uftt) {
+        this.byteSize = uftt.getByteSize();
+        this.noBlocks = uftt.getNoBlocks();
+        this.filePath = uftt.getFilePath();
+        this.absolutePath = uftt.getAbsolutePath();
+        this.send = uftt.isSend();
+        this.destinationAddress = uftt.getDestinationAddress();
+        this.destinationPort = uftt.getDestinationPort();
+        this.start();
+    }
+
     public void run() {
         if (send)
             sendFile();
@@ -44,6 +55,12 @@ public class UDPTransfer extends Thread {
             receiveFile();
     }
 
+    /**
+     * Calculate the MD5 hash of the input string and return the hash as a hex string
+     * 
+     * @param md The MessageDigest object that contains the digest algorithm.
+     * @return The MD5 hash of the input string.
+     */
     private String calculateMD5(MessageDigest md) {
         StringBuilder sb = new StringBuilder();
         byte[] bytes = md.digest();
@@ -54,6 +71,12 @@ public class UDPTransfer extends Thread {
         return sb.toString();
     }
 
+    /**
+     * Send a string to the destination address and port
+     * 
+     * @param ds The DatagramSocket object that will be used to send the message.
+     * @param s The string to send.
+     */
     private void sendString(DatagramSocket ds, String s) {
         DatagramPacket dp = new DatagramPacket(s.getBytes(), s.length(), destinationAddress, destinationPort);
         try {
@@ -64,6 +87,13 @@ public class UDPTransfer extends Thread {
         }
     }
 
+    /**
+     * Receive a packet from a socket and return the bytes of the packet
+     * 
+     * @param ds The DatagramSocket object that we created earlier.
+     * @param length The number of bytes to receive.
+     * @return The byte array of the received message.
+     */
     private byte[] receiveBytes(DatagramSocket ds, int length) {
         byte[] buffer = new byte[length];
         DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
@@ -76,6 +106,9 @@ public class UDPTransfer extends Thread {
         return buffer;
     }
 
+   /**
+    * Send a file to the destination
+    */
     private void sendFile() {
         try {
             // String fileName = absolutePath.substring(absolutePath.lastIndexOf("/")+1); //
@@ -138,6 +171,9 @@ public class UDPTransfer extends Thread {
         }
     }
 
+    /**
+     * Receive a file from a client
+     */
     private void receiveFile() {
         try {
             int blocksRead = 0;
@@ -166,7 +202,7 @@ public class UDPTransfer extends Thread {
                 for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
                     // int aid = 
                     DatagramPacket reply = new DatagramPacket(cache[i], cache[i].length);
-                    ds.receive(reply); // no timeout here, this socket is waiting for connections
+                    ds.receive(reply); //! use timeout here
                     lengths[i] = reply.getLength();
                     long aid = byteSize-(blocksRead-i)*BLOCK_BYTE_SIZE;
                     md.update(cache[i], 0, reply.getLength());

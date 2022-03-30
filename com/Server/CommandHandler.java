@@ -21,6 +21,9 @@ import com.Server.conn.ServerConnection;
 import com.Server.except.AuthorizationException;
 import com.enums.ResponseStatus;
 import com.DataTransfer.FileTransfer;
+import com.DataTransfer.FileTransferDownloadTask;
+import com.DataTransfer.FileUploadTask;
+import com.DataTransfer.ServerDownload;
 
 public class CommandHandler {
     Socket socket;
@@ -63,8 +66,9 @@ public class CommandHandler {
                 handleDownload(request);
                 break;
             case "UPLOAD":
-                handleUpload(request);
+                handleUpload();
                 break;
+            // case EXIT: close socket and all
         }
 
     }
@@ -75,88 +79,39 @@ public class CommandHandler {
             serverConnection.constructAndSendReply("Not enough arguments", "Bad Request");
             return;
         }
-        try {
-            String fileName = sp[1];
-            Path absolutePath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir(),
-                    fileName);
-            String absolutePathString = absolutePath.toString();
-            File f = new File(absolutePathString);
-            if (!f.exists() || !f.isFile()) {
-                serverConnection.constructAndSendReply("Inexistent file", "Bad Request");
-                return;
-            }
-            serverConnection.constructAndSendReply("FILE EXISTS", ResponseStatus.OK.getStatus());
-            System.out.println("File exists sent");
-            Request portNoReq = serverConnection.getRequest();
-            System.out.println("Got answer port no" + portNoReq);
-            String[] msgPort = portNoReq.getMessage().split("\n");
-            if (msgPort.length < 2 || !msgPort[0].equals("PORT")) {
-                serverConnection.constructAndSendReply("Insufficient port information", "Bad Request");
-                return;
-            }
-            int portNo = Integer.parseInt(msgPort[1]);
-            System.out.println("Got port: " + portNo);
-            Socket sendSocket = new Socket(socket.getInetAddress(), portNo);
-            ObjectOutputStream oosSocket = new ObjectOutputStream(sendSocket.getOutputStream());
-            oosSocket.flush();
-            ObjectInputStream oisSocket = new ObjectInputStream(sendSocket.getInputStream());
-            long bytes = Files.size(absolutePath);
-            long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE)
-                    + (bytes % (FileTransfer.BLOCK_BYTE_SIZE) == 0 ? 0 : 1);
-            System.out.println();
-            String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
-                    .toString();
-            new FileTransfer(oisSocket, oosSocket, bytes, noBlocks, dirPath, fileName, true);
-
-        } catch (IOException io) {
-            io.printStackTrace();
-            serverConnection.constructAndSendReply("Server Error: " + io.getMessage(), "Internal Server Error");
+        
+        String fileName = sp[1];
+        Path absolutePath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir(),
+                fileName);
+        String absolutePathString = absolutePath.toString();
+        File f = new File(absolutePathString);
+        if (!f.exists() || !f.isFile()) {
+            serverConnection.constructAndSendReply("Inexistent file", "Bad Request");
+            return;
         }
+        serverConnection.constructAndSendReply("FILE EXISTS", ResponseStatus.OK.getStatus());
+        System.out.println("File exists sent");
+        Request portNoReq = serverConnection.getRequest();
+        System.out.println("Got answer port no" + portNoReq);
+        String[] msgPort = portNoReq.getMessage().split("\n");
+        if (msgPort.length < 2 || !msgPort[0].equals("PORT")) {
+            serverConnection.constructAndSendReply("Insufficient port information", "Bad Request");
+            return;
+        }
+        int portNo = Integer.parseInt(msgPort[1]);
+        System.out.println("Got port: " + portNo);
+        
+        // ! use threadpool here
+        new ServerDownload(socket.getInetAddress(), portNo, absolutePath, fileName, serverConnection);
+        
+        // new FileTransfer(oisSocket, oosSocket, bytes, noBlocks, dirPath, fileName, true);
+
+        
     }
 
-    public void handleUpload(Request request) {
-        try (ServerSocket listenUploadSocket = new ServerSocket(0)) {
-            serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(),
-                    ResponseStatus.OK.getStatus());
-            Socket uploadSocket = listenUploadSocket.accept();
-            ObjectOutputStream oos = new ObjectOutputStream(uploadSocket.getOutputStream());
-            oos.flush();
-            ObjectInputStream ois = new ObjectInputStream(uploadSocket.getInputStream());
-            Reply rep = (Reply) ois.readObject();
-            String fileMetaData = rep.getMessage();
-            String[] fileDataSplit = fileMetaData.split("\n");
-            if (fileDataSplit.length < 6 ||
-                    !fileDataSplit[0].equals("FILE") ||
-                    !fileDataSplit[2].equals("SIZE") ||
-                    !fileDataSplit[4].equals("BLOCKS")) {
-                System.err.println("Errors communicating with the server");
-                return;
-            }
-            String name = fileDataSplit[1];
-            long byteSize = Integer.parseInt(fileDataSplit[3]);
-            long blockNumber = Integer.parseInt(fileDataSplit[5]);
-            System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", name, byteSize, blockNumber);
-            String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
-                    .toString();
-            FileTransfer ft = new FileTransfer(ois, oos, byteSize, blockNumber, dirPath, name, false);
-            ft.join();
-            String path = Paths.get(serverConnection.getUser().getServerDir(),name).toString();
-            ConfigServer secondaryConfig = serverConnection.getServer().getDestinationConfig();
-            System.out.println("Secondary config: "+secondaryConfig);
-            System.out.println("byte size: "+byteSize);
-            System.out.println("noBlocks: "+blockNumber);
-            
-            UDPTransfer udp = new UDPTransfer(byteSize, blockNumber, serverConnection.getAbsolutePath(), path ,  
-                true, secondaryConfig.getServerAddress(), secondaryConfig.getUdpFileTransferPort());
-        } catch (IOException io) {
-            io.printStackTrace();
-        } catch (ClassNotFoundException cnf) {
-            cnf.printStackTrace();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
+    public void handleUpload() {
+        FileUploadTask fut = new FileUploadTask(serverConnection);
+        serverConnection.getServer().getQueueFileRcv().add(fut);
     }
 
     public void login(Request request) {

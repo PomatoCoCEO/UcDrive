@@ -10,8 +10,8 @@ import com.Server.config.ConfigServer;
 public class Heartbeat extends Thread {
     private DatagramSocket ds;
     private ConfigServer cs;
-    public final static int ALLOWED_HEARTBEAT_FAILURES = 10;
-    protected final static int HEARTBEAT_SLEEP_MILLISECONDS = 1000;
+    public final static int ALLOWED_HEARTBEAT_FAILURES = 3;
+    protected final static int HEARTBEAT_SLEEP_MILLISECONDS = 500;
     protected boolean primary = true;
 
     /**
@@ -40,9 +40,10 @@ public class Heartbeat extends Thread {
                 byte[] buffer = new byte[1000];
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                 ds.receive(reply);
-                if ((new String(reply.getData())).equals("I AM PRIMARY")) {
+                noFailedHeartbeats = 0;
+                /*if ((new String(reply.getData())).equals("I AM PRIMARY")) {
                     noFailedHeartbeats = 0;
-                }
+                }*/
                 Thread.sleep(HEARTBEAT_SLEEP_MILLISECONDS);
             } catch (SocketTimeoutException ste) {
                 noFailedHeartbeats++;
@@ -71,8 +72,7 @@ public class Heartbeat extends Thread {
             DatagramPacket request = new DatagramPacket(message.getBytes(), message.length(), cs.getServerAddress(),
                     cs.getUdpHeartbeatPort());
             try {
-                System.out.println("Primary heartbeat sending datagram to port "+request.getPort()+
-                        ", address "+request.getAddress()+", content "+request.getData());
+                System.out.println("Primary heartbeat sending datagram to port "+request.getPort()+", address "+request.getAddress()+", content "+request.getData());
                 ds.send(request);
                 byte[] buffer = new byte[1000]; // ! this is a magic number
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
@@ -88,8 +88,8 @@ public class Heartbeat extends Thread {
             } catch (SocketTimeoutException ste) {
                 if (isSecondary)
                     System.out.println("Primary server not restored yet");
-                else
-                    System.out.println("Secondary server down");
+                /*else
+                    System.out.println("Secondary server down");*/
                 noFailedHeartbeats++;
             } catch (IOException e) {
                 // TODO Auto-generated catch block

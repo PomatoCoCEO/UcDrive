@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 import com.DataTransfer.UDPTransfer;
-import com.Server.config.ConfigServer;
 
 public class UDPAccept extends Thread {
     private Server server;
@@ -14,6 +14,7 @@ public class UDPAccept extends Thread {
         this.server = server;
         this.start();
     }
+
 
     private void acceptUdp() {
         // TODO: accept udp connections for file updating
@@ -32,13 +33,10 @@ public class UDPAccept extends Thread {
                     long size = Long.parseLong(elements[1].split(" ", 2)[1]);
                     int noBlocks = Integer.parseInt(elements[2].split(" ", 2)[1]);
                     int portNum = Integer.parseInt(elements[3].split(" ", 2)[1]);
-                    // send OK and start to download the file
                     // ! this might not be the correct port
                     new UDPTransfer(size, noBlocks, server.getAbsolutePath(), filePath,
                             false, reply.getAddress(), reply.getPort());
-
                 } catch (IOException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
@@ -47,6 +45,7 @@ public class UDPAccept extends Thread {
         }
     }
 
+    @Override
     public void run() {
         acceptUdp();
     }

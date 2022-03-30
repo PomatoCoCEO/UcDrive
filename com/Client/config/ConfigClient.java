@@ -1,7 +1,9 @@
 package com.Client.config;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -37,6 +39,7 @@ public class ConfigClient {
         }
 
         // BufferedReader br = new BufferedReader(fr);
+        //! verify ip syntax
         System.out.println("Enter new primary server ip: ");
         setPrimaryServerName(sc.next());
         System.out.println("Enter new primary server port: ");
@@ -45,6 +48,18 @@ public class ConfigClient {
         setSecondaryServerName(sc.next());
         System.out.println("Enter new secondary server port: ");
         setSecondaryServerPort(sc.nextInt());
+
+        // Creating a new file named `config` in the same directory as the program.
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("config"));
+			writer.write(primaryServerName+ " "+ primaryServerPort + "\n" + secondaryServerName+ " "+ secondaryServerPort + "\n");
+            writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+        
 
         // ! write new info to file
 

@@ -1,5 +1,8 @@
 package com.Server;
 
+import com.DataTransfer.FileTransferDownloadTask;
+import com.DataTransfer.FileUploadTask;
+import com.DataTransfer.UDPFileTransferTask;
 import com.DataTransfer.UDPTransfer;
 import com.Server.auth.*;
 import com.Server.config.ConfigServer;
@@ -16,14 +19,27 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.ServerError;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Server {
     protected ServerSocket serverSocket;
     protected String absolutePath;
-    protected final static int SOCKET_TIMEOUT_MILLISECONDS = 5000;
+    protected final static int SOCKET_TIMEOUT_MILLISECONDS = 1000;
+    protected final static int THREADS_PER_POOL = 10;
+    protected final static int BLOCKING_QUEUE_SIZE=100;
     protected Auth authenticationInfo;
     protected ConfigServer ownConfig;
-    protected ConfigServer redundantConfig;
+    protected ConfigServer otherConfig;
+    protected BlockingQueue<FileUploadTask> queueFileRcv;
+    protected BlockingQueue<FileTransferDownloadTask> queueFileSend;
+    protected BlockingQueue<UDPFileTransferTask> queueUdp;
+    protected ExecutorService threadPoolFileTasks;
+    protected ExecutorService threadPoolTcpAccept;
+    protected ExecutorService threadPoolUDPSend;
+    protected ExecutorService threadPoolUDPReceive;
     
 
     public Server(String ownConfigFile, String otherConfigFile) {
@@ -32,58 +48,16 @@ public class Server {
 
             authenticationInfo = new Auth("com/Server/runfiles/users");
             ownConfig = new ConfigServer("com/Server/runfiles/" + ownConfigFile);
-            redundantConfig = new ConfigServer("com/Server/runfiles/" + otherConfigFile);
+            otherConfig = new ConfigServer("com/Server/runfiles/" + otherConfigFile);
             System.out.println("Server's own config: "+ownConfig);
-            System.out.println("Server's mate config: "+redundantConfig);
+            System.out.println("Server's mate config: "+otherConfig);
             serverSocket = new ServerSocket(ownConfig.getTcpSocketPort());
             System.out.println("LISTEN SOCKET=" + serverSocket);
+            queueFileRcv = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE); // for file transfers with clients
+            queueUdp = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE); // for file transfers with the secondary server
         } catch (IOException io) {
             io.printStackTrace();
             return;
-        }
-    }
-
-    protected void acceptTcp() {
-        try {
-            while (true) {
-                Socket clientSocket = serverSocket.accept(); // BLOQUEANTE
-                System.out.println("CLIENT_SOCKET (created at accept())=" + clientSocket);
-                new ServerConnection(clientSocket, this);
-            }
-        } catch (IOException io) {
-            io.printStackTrace();
-            return;
-        }
-    }
-
-    protected void acceptUdp() {
-        // TODO: accept udp connections for file updating
-        try {
-            DatagramSocket ds = new DatagramSocket(ownConfig.getUdpFileTransferPort());
-            while (true) {
-                try {
-                    byte[] buffer = new byte[1000];
-                    DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
-                    ds.receive(reply); // no timeout here, this socket is waiting for connections
-                    String message = new String(reply.getData()); // FILE <FILE_PATH>\nSIZE <BYTE_SIZE>\nBLOCKS
-                                                                  // <BLOCKS>\nPORT <PORT_NUMBER>
-                    String[] elements = message.split("\n");
-                    String filePath = elements[0].split(" ", 2)[1];
-                    long size = Long.parseLong(elements[1].split(" ", 2)[1]);
-                    int noBlocks = Integer.parseInt(elements[2].split(" ", 2)[1]);
-                    int portNum = Integer.parseInt(elements[3].split(" ", 2)[1]);
-                    // send OK and start to download the file
-                    // ! this might not be the correct port
-                    new UDPTransfer(size, noBlocks, absolutePath, filePath,
-                            false, reply.getAddress(), reply.getPort());
-
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        } catch (SocketException e) {
-            e.printStackTrace();
         }
     }
 
@@ -104,7 +78,34 @@ public class Server {
     }
 
     public ConfigServer getDestinationConfig() {
-        return redundantConfig;
+        return otherConfig;
+    }
+
+    public ExecutorService getThreadPoolFiles() {
+        return threadPoolFileTasks;
+    }
+
+    public ExecutorService getThreadPoolUDPSend() {
+        return threadPoolUDPSend;
+    }
+    
+    public ExecutorService getThreadPoolUDPReceive() {
+        return threadPoolUDPReceive;
+    }
+
+    public ExecutorService getThreadPoolTcpAccept() {
+        return threadPoolTcpAccept;
+    }
+
+    public BlockingQueue<UDPFileTransferTask> getQueueUdp() {
+        return queueUdp;
+    }
+
+    public BlockingQueue<FileUploadTask> getQueueFileRcv() {
+        return queueFileRcv;
+    }
+    public BlockingQueue<FileTransferDownloadTask> getQueueFileSend() {
+        return queueFileSend;
     }
     
 

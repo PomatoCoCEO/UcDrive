@@ -26,14 +26,19 @@ public class SecondaryServer extends Server {
             UDPAccept udpAccept = new UDPAccept(this); // we need to use our config
             // here we should make another thread to accept the dup connections
             sh.join();
+            System.out.println("Secondary heartbeat joined.");
             udpAccept.interrupt(); 
             // after the server knows it will replace the primary server 
+            System.out.println("UDP transfer thread interrupted.");
             // it should kill the file receipt thread
-            udpAccept.join();
+            if(udpAccept.isAlive())
+                udpAccept.join();
+            //! udpAccept won't die, so we need to fix this
+            System.out.println("UDP transfer thread over.");
             PrimaryHeartbeat ph = new PrimaryHeartbeat(ds, primaryServerConfig, true); 
             TCPAccept ta = new TCPAccept(this);
-            ph.join();
             ta.join();
+            ph.join();
             // ! we might need to check the value of isSecondary in this call
             // ds.close();
         } catch (SocketException e) {

@@ -4,29 +4,39 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
+import com.Client.Client;
+import com.Client.config.ConfigClient;
 import com.DataTransfer.Reply;
 import com.DataTransfer.Request;
 
 public class ClientConnection {
 
-    private static ObjectOutputStream out;
-    private static ObjectInputStream in;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
+    private ConfigClient config;
     private Socket socket;
 
-    public ClientConnection(Socket socket) throws IOException {
+    public ClientConnection(){}
+
+    public ClientConnection(Socket socket, ConfigClient config) throws IOException {
         this.socket = socket;
+        this.config = config;
         out = new ObjectOutputStream(socket.getOutputStream());
         out.flush();
         in = new ObjectInputStream(socket.getInputStream());
 
     }
 
-    public void sendRequest(Request request) {
+    public void sendRequest(Request request) throws SocketException {
         try {
             out.writeObject(request);
             out.flush();
-        } catch (IOException io) {
+        } catch(SocketException e) {
+            throw e;
+        }catch (IOException io) {
             io.printStackTrace();
         }
     }
@@ -52,10 +62,12 @@ public class ClientConnection {
         }
     }
 
-    public Reply getReply() {
+    public Reply getReply() throws SocketTimeoutException, SocketException {
         Reply reply = new Reply("", "");
         try {
             reply = (Reply) in.readObject();
+        } catch(SocketTimeoutException | SocketException e) {
+            throw e;
         } catch (ClassNotFoundException | IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -65,6 +77,20 @@ public class ClientConnection {
 
     public Socket getSocket() {
         return socket;
+    }
+
+    public void setSocketParams(Socket sock, ObjectInputStream oisNew, ObjectOutputStream oosNew) {
+        try {
+            if(this.socket!= null){
+                this.socket.close();
+            }
+            this.socket = sock;
+            this.out = oosNew;
+            this.in = oisNew;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } 
     }
 
 }
