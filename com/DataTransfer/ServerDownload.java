@@ -1,6 +1,7 @@
 package com.DataTransfer;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,21 +25,35 @@ import com.enums.ResponseStatus;
 
 public class ServerDownload extends Thread {
 
-    private String fileName;
+    
+    private String filePath;
     public static final int BLOCK_BYTE_SIZE = 8192;
     private InetAddress address;
     private int portNo;
-    private Path absolutePath;
     private ServerConnection serverConnection;
 
-	public ServerDownload(InetAddress inetAddress, int portNo, Path absolutePath, String fileName, ServerConnection serverConnection){
+
+	public ServerDownload(InetAddress inetAddress, int portNo, String filePath, ServerConnection serverConnection){
         this.address= inetAddress;
         this.portNo= portNo;
-        this.absolutePath= absolutePath;
-        this.fileName= fileName;
+
+        this.filePath= filePath;
         this.serverConnection= serverConnection;
         this.start();
 	}
+
+    public ServerDownload(FileDownloadTask fdt){
+        this.address= fdt.getAddress();
+        this.portNo= fdt.getPortNo();
+
+        this.filePath= fdt.getFilePath();
+        this.serverConnection= fdt.getServerConnection();
+        this.start();
+	}
+    // public ServerDownload(ServerConnection serverConnection, String filePath) {
+    //     this.serverConnection = serverConnection;
+    //     this.filePath=filePath;
+    // }
 
 
 
@@ -65,23 +80,23 @@ public class ServerDownload extends Thread {
 
     private void sendFile() {
         try {
+            
+            String absoluteDirPath = serverConnection.getServer().getAbsolutePath();
 
-            Socket sendSocket = new Socket(socket.getInetAddress(), portNo);
+
+            Socket sendSocket = new Socket( address, portNo);
             ObjectOutputStream oos = new ObjectOutputStream(sendSocket.getOutputStream());
             oos.flush();
             ObjectInputStream ois = new ObjectInputStream(sendSocket.getInputStream());
+            Path absolutePath = Paths.get(absoluteDirPath, filePath);
             long bytes = Files.size(absolutePath);
             long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE)
                     + (bytes % (FileTransfer.BLOCK_BYTE_SIZE) == 0 ? 0 : 1);
             System.out.println();
             String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
                     .toString();
-            FileTransferDownloadTask ftt = new FileTransferDownloadTask( sendSocket, dirPath, fileName, bytes, noBlocks);
-            serverConnection.getServer().getQueueFileSend().add(ftt);
-            System.out.println("Added thing to queueueueueueue");
-            System.out.println("Queue size: "+serverConnection.getServer().getQueueFileSend().size());
 
-            Reply rep = new Reply("FILE\n" + fileName + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
+            Reply rep = new Reply("FILE\n" + filePath + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
                     ResponseStatus.OK.getStatus());
             System.out.println("Sending reply with file metadata: "+rep);
             oos.writeObject(rep);
@@ -90,7 +105,7 @@ public class ServerDownload extends Thread {
             do {
 
                 MessageDigest md = MessageDigest.getInstance("MD5");
-                FileInputStream fis = new FileInputStream(new File(Paths.get(dirPath, fileName).toString()));
+                FileInputStream fis = new FileInputStream(new File(Paths.get(absoluteDirPath, filePath).toString()));
                 DigestInputStream dis = new DigestInputStream(fis, md);
 
                 byte[] toSend = new byte[BLOCK_BYTE_SIZE];

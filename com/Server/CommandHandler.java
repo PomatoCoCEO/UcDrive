@@ -21,7 +21,7 @@ import com.Server.conn.ServerConnection;
 import com.Server.except.AuthorizationException;
 import com.enums.ResponseStatus;
 import com.DataTransfer.FileTransfer;
-import com.DataTransfer.FileTransferDownloadTask;
+import com.DataTransfer.FileDownloadTask;
 import com.DataTransfer.FileUploadTask;
 import com.DataTransfer.ServerDownload;
 
@@ -83,6 +83,8 @@ public class CommandHandler {
         String fileName = sp[1];
         Path absolutePath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir(),
                 fileName);
+        Path filePath = Paths.get( serverConnection.getUser().getServerDir(),
+                fileName);
         String absolutePathString = absolutePath.toString();
         File f = new File(absolutePathString);
         if (!f.exists() || !f.isFile()) {
@@ -90,6 +92,7 @@ public class CommandHandler {
             return;
         }
         serverConnection.constructAndSendReply("FILE EXISTS", ResponseStatus.OK.getStatus());
+        //! this section of code needs to remain here because the request should be handled in a single thread
         System.out.println("File exists sent");
         Request portNoReq = serverConnection.getRequest();
         System.out.println("Got answer port no" + portNoReq);
@@ -102,7 +105,11 @@ public class CommandHandler {
         System.out.println("Got port: " + portNo);
         
         // ! use threadpool here
-        new ServerDownload(socket.getInetAddress(), portNo, absolutePath, fileName, serverConnection);
+
+        FileDownloadTask ftt = new FileDownloadTask( filePath.toString(),socket.getInetAddress(), portNo, serverConnection );
+        serverConnection.getServer().getQueueFileSend().add(ftt);
+            
+        //new ServerDownload(socket.getInetAddress(), portNo, absolutePath, fileName, serverConnection);
         
         // new FileTransfer(oisSocket, oosSocket, bytes, noBlocks, dirPath, fileName, true);
 
@@ -110,8 +117,15 @@ public class CommandHandler {
     }
 
     public void handleUpload() {
-        FileUploadTask fut = new FileUploadTask(serverConnection);
-        serverConnection.getServer().getQueueFileRcv().add(fut);
+        try{
+            ServerSocket listenUploadSocket = new ServerSocket(0);
+            serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(),
+                        ResponseStatus.OK.getStatus());
+            FileUploadTask fut = new FileUploadTask(serverConnection,listenUploadSocket);
+            serverConnection.getServer().getQueueFileRcv().add(fut);
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void login(Request request) {

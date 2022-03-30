@@ -15,7 +15,7 @@ public class FileUploadCreator extends Thread {
             try {
                 FileUploadTask ftt = server.getQueueFileRcv().take(); // waits until a new file arrives
                 System.out.println("Tirou da queue");
-                server.getThreadPoolFiles().execute(new ServerUpload(ftt.getServerConnection()));
+                server.getThreadPoolFiles().execute(new ServerUpload(ftt.getServerConnection(),ftt.getServerSocket()));
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

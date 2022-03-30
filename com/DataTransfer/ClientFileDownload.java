@@ -115,7 +115,9 @@ public class ClientFileDownload extends Thread {
             do {
 
                 String fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/') + 1);
+                if(fileName.indexOf('\\')!=-1) fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('\\')+1);
                 filePath = Paths.get(dirPath, fileNameWithoutDirectory).toString();
+                System.out.println("Path to use: "+filePath);
                 File myObj = new File(filePath);
                 if (myObj.createNewFile()) {
                     System.out.println("File created: " + myObj.getName());

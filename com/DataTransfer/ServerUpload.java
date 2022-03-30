@@ -17,18 +17,21 @@ import com.enums.ResponseStatus;
 
 public class ServerUpload extends Thread {
     private ServerConnection serverConnection;
-    public ServerUpload(ServerConnection sc) {
+    private ServerSocket serverSocket;
+    public ServerUpload(ServerConnection sc, ServerSocket serverSocket) {
         this.serverConnection = sc;
+        this.serverSocket=serverSocket;
         this.start();
     }
 
     public void run() {
-        try(ServerSocket listenUploadSocket = new ServerSocket(0)) {
+        ServerSocket listenUploadSocket = serverSocket;
+        try{
+        // try(ServerSocket listenUploadSocket = new ServerSocket(0)) {
             // old code
             // sends port so client sends metadata here
             
-            serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(),
-                    ResponseStatus.OK.getStatus());
+            
 
             // new socket to receive file
             Socket uploadSocket = listenUploadSocket.accept();

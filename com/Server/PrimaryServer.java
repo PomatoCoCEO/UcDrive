@@ -1,8 +1,8 @@
 package com.Server;
 
 import com.DataTransfer.FileTransferDownloadCreator;
-import com.DataTransfer.FileTransferTcpCreator;
 import com.DataTransfer.FileTransferUdpCreator;
+import com.DataTransfer.FileTransferUploadCreator;
 import com.Server.auth.*;
 import com.Server.config.ConfigServer;
 import com.Server.conn.ServerConnection;

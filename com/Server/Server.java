@@ -1,6 +1,7 @@
 package com.Server;
 
-import com.DataTransfer.FileTransferDownloadTask;
+import com.DataTransfer.FileDownloadTask;
+import com.DataTransfer.FileDownloadTask;
 import com.DataTransfer.FileUploadTask;
 import com.DataTransfer.UDPFileTransferTask;
 import com.DataTransfer.UDPTransfer;
@@ -34,7 +35,7 @@ public class Server {
     protected ConfigServer ownConfig;
     protected ConfigServer otherConfig;
     protected BlockingQueue<FileUploadTask> queueFileRcv;
-    protected BlockingQueue<FileTransferDownloadTask> queueFileSend;
+    protected BlockingQueue<FileDownloadTask> queueFileSend;
     protected BlockingQueue<UDPFileTransferTask> queueUdp;
     protected ExecutorService threadPoolFileTasks;
     protected ExecutorService threadPoolTcpAccept;
@@ -54,6 +55,7 @@ public class Server {
             serverSocket = new ServerSocket(ownConfig.getTcpSocketPort());
             System.out.println("LISTEN SOCKET=" + serverSocket);
             queueFileRcv = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE); // for file transfers with clients
+            queueFileSend = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE); // for file transfers with downloads
             queueUdp = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE); // for file transfers with the secondary server
         } catch (IOException io) {
             io.printStackTrace();
@@ -104,7 +106,7 @@ public class Server {
     public BlockingQueue<FileUploadTask> getQueueFileRcv() {
         return queueFileRcv;
     }
-    public BlockingQueue<FileTransferDownloadTask> getQueueFileSend() {
+    public BlockingQueue<FileDownloadTask> getQueueFileSend() {
         return queueFileSend;
     }
     
