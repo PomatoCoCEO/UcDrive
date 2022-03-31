@@ -68,6 +68,9 @@ public class CommandHandler {
             case "UPLOAD":
                 handleUpload();
                 break;
+            case "ABORT":
+                this.serverConnection.close();
+                break;
             // case EXIT: close socket and all
         }
 
@@ -79,11 +82,11 @@ public class CommandHandler {
             serverConnection.constructAndSendReply("Not enough arguments", "Bad Request");
             return;
         }
-        
+
         String fileName = sp[1];
         Path absolutePath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir(),
                 fileName);
-        Path filePath = Paths.get( serverConnection.getUser().getServerDir(),
+        Path filePath = Paths.get(serverConnection.getUser().getServerDir(),
                 fileName);
         String absolutePathString = absolutePath.toString();
         File f = new File(absolutePathString);
@@ -92,7 +95,8 @@ public class CommandHandler {
             return;
         }
         serverConnection.constructAndSendReply("FILE EXISTS", ResponseStatus.OK.getStatus());
-        //! this section of code needs to remain here because the request should be handled in a single thread
+        // ! this section of code needs to remain here because the request should be
+        // handled in a single thread
         System.out.println("File exists sent");
         Request portNoReq = serverConnection.getRequest();
         System.out.println("Got answer port no" + portNoReq);
@@ -103,32 +107,34 @@ public class CommandHandler {
         }
         int portNo = Integer.parseInt(msgPort[1]);
         System.out.println("Got port: " + portNo);
-        
+
         // ! use threadpool here
 
-        FileDownloadTask ftt = new FileDownloadTask( filePath.toString(),socket.getInetAddress(), portNo, serverConnection );
+        FileDownloadTask ftt = new FileDownloadTask(filePath.toString(), socket.getInetAddress(), portNo,
+                serverConnection);
 
         serverConnection.getServer().getQueueFileSend().add(ftt);
-            
-        //new ServerDownload(socket.getInetAddress(), portNo, absolutePath, fileName, serverConnection);
-        
-        // new FileTransfer(oisSocket, oosSocket, bytes, noBlocks, dirPath, fileName, true);
 
-        
+        // new ServerDownload(socket.getInetAddress(), portNo, absolutePath, fileName,
+        // serverConnection);
+
+        // new FileTransfer(oisSocket, oosSocket, bytes, noBlocks, dirPath, fileName,
+        // true);
+
     }
 
     public void handleUpload() {
-        try{
+        try {
             System.out.println("Handling upload"); // handles upload only once
             ServerSocket listenUploadSocket = new ServerSocket(0);
-            System.out.println("New port opened for file transfer: "+ listenUploadSocket.getLocalPort());
+            System.out.println("New port opened for file transfer: " + listenUploadSocket.getLocalPort());
             serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(),
-                        ResponseStatus.OK.getStatus());
-            FileUploadTask fut = new FileUploadTask(serverConnection,listenUploadSocket);
+                    ResponseStatus.OK.getStatus());
+            FileUploadTask fut = new FileUploadTask(serverConnection, listenUploadSocket);
             serverConnection.getServer().getQueueFileRcv().add(fut);
             System.out.println("Added to quuuuuuuuuue");
 
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

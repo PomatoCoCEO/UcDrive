@@ -23,16 +23,15 @@ import java.util.concurrent.Executors;
 
 public class PrimaryServer extends Server {
 
-    public PrimaryServer(String ownConfigFile, String otherConfigFile) {
-        super(ownConfigFile, otherConfigFile);
+    public PrimaryServer(String ownConfigFile, String otherConfigFile, String absPath) {
+        super(ownConfigFile, otherConfigFile, absPath);
     }
 
     public void work() {
-        absolutePath = System.getProperty("user.dir") + "/com/Server/primary/data";
         try {
             ConfigServer secondaryServerConfig = new ConfigServer("com/Server/runfiles/Sconfig");
-            DatagramSocket ds = new DatagramSocket(ownConfig.getUdpHeartbeatPort()); 
-            //! here the port must be the one in the configuration
+            DatagramSocket ds = new DatagramSocket(ownConfig.getUdpHeartbeatPort());
+            // ! here the port must be the one in the configuration
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
             byte[] buffer = new byte[1000];
             boolean isCurrentlyPrimary = true;
@@ -48,7 +47,8 @@ public class PrimaryServer extends Server {
                         break;
                     } else {
                         // act like a primary server
-                        // PrimaryHeartbeat phb = new PrimaryHeartbeat(ds, secondaryServerConfig ,false);
+                        // PrimaryHeartbeat phb = new PrimaryHeartbeat(ds, secondaryServerConfig
+                        // ,false);
                         // go to tcp
                         break;
                     }
@@ -64,12 +64,11 @@ public class PrimaryServer extends Server {
             }
 
             if (isCurrentlyPrimary) {
-                PrimaryHeartbeat phb = new PrimaryHeartbeat(ds, secondaryServerConfig ,false);
+                PrimaryHeartbeat phb = new PrimaryHeartbeat(ds, secondaryServerConfig, false);
                 bePrimary();
                 phb.join();
                 // acceptTcp();
-            }
-            else {
+            } else {
                 UDPAccept ua = new UDPAccept(this);
                 ua.join();
             }
@@ -82,33 +81,11 @@ public class PrimaryServer extends Server {
         }
     }
 
-    public void bePrimary () {
-        // create threadPools
-        threadPoolFileTasks = Executors.newFixedThreadPool(THREADS_PER_POOL);
-        threadPoolUDPSend = Executors.newFixedThreadPool(THREADS_PER_POOL);
-        threadPoolTcpAccept = Executors.newFixedThreadPool(THREADS_PER_POOL);
-        TCPAccept tcpa = new TCPAccept(this);
-        FileTransferUploadCreator fttc= new FileTransferUploadCreator(this);
-        FileTransferDownloadCreator ftdc = new FileTransferDownloadCreator(this);
-        FileTransferUdpCreator ftuc = new FileTransferUdpCreator(this);
-        
-        System.out.println("Hello there!");
-        Scanner sc = new Scanner(System.in);
-        while(true) {
-            String s = sc.nextLine();
-            if(s.equalsIgnoreCase("EXIT")) {
-                // ? we know that this should be given more care...
-                System.exit(1);
-            }
-            else {
-                System.out.println("You typed: "+s);
-            }
-        }
-    }
-
     public static void main(String[] args) {
-        PrimaryServer ps = new PrimaryServer("Pconfig", "Sconfig"); 
-        // one configuration is relative to the server itself, 
+        String absPath = System.getProperty("user.dir") + "/com/Server/primary/data";
+
+        PrimaryServer ps = new PrimaryServer("Pconfig", "Sconfig", absPath);
+        // one configuration is relative to the server itself,
         // the other is relative to the secondary server
         ps.work();
 

@@ -3,15 +3,19 @@ package com.Server.auth;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.TreeSet;
 
+import com.Server.Server;
+
 public class Auth {
     private TreeSet<User> users;
+    private Server server;
 
     public void loadUsers(String fileName) throws IOException {
         File fr = new File(fileName);
-        String absolutePath = System.getProperty("user.dir") + "/com/Server/data/"; 
+        String absolutePath = server.getAbsolutePath();
         // this is in the server so it is ok
         try (Scanner sc = new Scanner(fr)) {
             while (sc.hasNextLine()) {
@@ -22,6 +26,14 @@ public class Auth {
                 // String[] sp = line.split(" ");
                 User u = new User(line1, line2, line3, line4);
                 users.add(u);
+
+                File f = new File(Paths.get(absolutePath, line1).toString());
+                if (f.mkdir() == true) { // there is no directory with that name
+                    System.out.println("Directory has been created successfully " + line1);
+                } else {
+                    System.out.println("Directory cannot be created (its already created) " + line1);
+                }
+
             }
         } catch (FileNotFoundException f) {
             System.out.println("File not found: " + f.getMessage());
@@ -68,7 +80,8 @@ public class Auth {
         changeUsers(Operation.ADD, user);
     }
 
-    public Auth(String fileName) throws IOException {
+    public Auth(String fileName, Server server) throws IOException {
+        this.server = server;
         users = new TreeSet<>();
         loadUsers(fileName);
     }

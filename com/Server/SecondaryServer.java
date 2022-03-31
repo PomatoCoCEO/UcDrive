@@ -7,37 +7,33 @@ import java.net.SocketException;
 
 public class SecondaryServer extends Server {
 
-    public SecondaryServer(String ownConfigFile, String otherConfigFile) {
-        super(ownConfigFile, otherConfigFile);
+    public SecondaryServer(String ownConfigFile, String otherConfigFile, String absPath) {
+        super(ownConfigFile, otherConfigFile, absPath);
     }
 
     public void work() {
 
-        absolutePath = System.getProperty("user.dir") + "/com/Server/secondary/data";
-
         try {
             ConfigServer primaryServerConfig = getDestinationConfig();
             // new ConfigServer("com/Server/runfiles/Pconfig");
-            
+
             DatagramSocket ds = new DatagramSocket(ownConfig.getUdpHeartbeatPort());
-            //! this socket should also be determined statically
+            // ! this socket should also be determined statically
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
             SecondaryHeartbeat sh = new SecondaryHeartbeat(ds, primaryServerConfig);
             UDPAccept udpAccept = new UDPAccept(this); // we need to use our config
             // here we should make another thread to accept the dup connections
             sh.join();
             System.out.println("Secondary heartbeat joined.");
-            udpAccept.interrupt(); 
-            // after the server knows it will replace the primary server 
+            udpAccept.interrupt();
+            // after the server knows it will replace the primary server
             System.out.println("UDP transfer thread interrupted.");
             // it should kill the file receipt thread
-            if(udpAccept.isAlive())
-                udpAccept.join();
-            //! udpAccept won't die, so we need to fix this
+
+            // ! udpAccept won't die, so we need to fix this
             System.out.println("UDP transfer thread over.");
-            PrimaryHeartbeat ph = new PrimaryHeartbeat(ds, primaryServerConfig, true); 
-            TCPAccept ta = new TCPAccept(this);
-            ta.join();
+            PrimaryHeartbeat ph = new PrimaryHeartbeat(ds, primaryServerConfig, true);
+            bePrimary();
             ph.join();
             // ! we might need to check the value of isSecondary in this call
             // ds.close();
@@ -58,7 +54,8 @@ public class SecondaryServer extends Server {
     }
 
     public static void main(String[] args) {
-        SecondaryServer ss = new SecondaryServer("Sconfig","Pconfig");
+        String absPath = System.getProperty("user.dir") + "/com/Server/secondary/data";
+        SecondaryServer ss = new SecondaryServer("Sconfig", "Pconfig", absPath);
         ss.work();
 
     }

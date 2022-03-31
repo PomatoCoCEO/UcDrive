@@ -13,17 +13,17 @@ public class TCPAccept extends Thread {
         this.start();
     }
 
-    public void run () {
+    public void run() {
         acceptTcp();
     }
-    
-    private void acceptTcp () {
+
+    private void acceptTcp() {
         while (true) {
             System.out.println("Estou a aceitar clientes");
             try {
                 Socket clientSocket = server.getServerSocket().accept();
                 System.out.println("CLIENT_SOCKET (created at accept())=" + clientSocket);
-                System.out.println("Is socket open ? "+!clientSocket.isClosed());
+                System.out.println("Is socket open ? " + !clientSocket.isClosed());
                 server.getThreadPoolTcpAccept().execute(new ServerConnection(clientSocket, server));
             } catch (IOException e) {
                 // TODO Auto-generated catch block

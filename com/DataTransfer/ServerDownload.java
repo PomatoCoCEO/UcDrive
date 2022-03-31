@@ -25,45 +25,41 @@ import com.enums.ResponseStatus;
 
 public class ServerDownload extends Thread {
 
-    
     private String filePath;
     public static final int BLOCK_BYTE_SIZE = 8192;
     private InetAddress address;
     private int portNo;
     private ServerConnection serverConnection;
 
+    public ServerDownload(InetAddress inetAddress, int portNo, String filePath, ServerConnection serverConnection) {
+        this.address = inetAddress;
+        this.portNo = portNo;
 
-	public ServerDownload(InetAddress inetAddress, int portNo, String filePath, ServerConnection serverConnection){
-        this.address= inetAddress;
-        this.portNo= portNo;
-
-        this.filePath= filePath;
-        this.serverConnection= serverConnection;
+        this.filePath = filePath;
+        this.serverConnection = serverConnection;
         this.start();
-	}
+    }
 
-    public ServerDownload(FileDownloadTask fdt){
-        this.address= fdt.getAddress();
-        this.portNo= fdt.getPortNo();
+    public ServerDownload(FileDownloadTask fdt) {
+        this.address = fdt.getAddress();
+        this.portNo = fdt.getPortNo();
 
-        this.filePath= fdt.getFilePath();
-        this.serverConnection= fdt.getServerConnection();
+        this.filePath = fdt.getFilePath();
+        this.serverConnection = fdt.getServerConnection();
         this.start();
-	}
+    }
     // public ServerDownload(ServerConnection serverConnection, String filePath) {
-    //     this.serverConnection = serverConnection;
-    //     this.filePath=filePath;
+    // this.serverConnection = serverConnection;
+    // this.filePath=filePath;
     // }
 
-
-
-
-	public void run() {
+    public void run() {
         sendFile();
     }
-    
+
     /**
-     * Calculate the MD5 hash of the input string and return the hash as a hex string
+     * Calculate the MD5 hash of the input string and return the hash as a hex
+     * string
      * 
      * @param md The MessageDigest object that contains the digest algorithm.
      * @return The MD5 hash of the input string.
@@ -80,11 +76,10 @@ public class ServerDownload extends Thread {
 
     private void sendFile() {
         try {
-            
+
             String absoluteDirPath = serverConnection.getServer().getAbsolutePath();
 
-
-            Socket sendSocket = new Socket( address, portNo);
+            Socket sendSocket = new Socket(address, portNo);
             ObjectOutputStream oos = new ObjectOutputStream(sendSocket.getOutputStream());
             oos.flush();
             ObjectInputStream ois = new ObjectInputStream(sendSocket.getInputStream());
@@ -98,7 +93,7 @@ public class ServerDownload extends Thread {
 
             Reply rep = new Reply("FILE\n" + filePath + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
                     ResponseStatus.OK.getStatus());
-            System.out.println("Sending reply with file metadata: "+rep);
+            System.out.println("Sending reply with file metadata: " + rep);
             oos.writeObject(rep);
             oos.flush();
 

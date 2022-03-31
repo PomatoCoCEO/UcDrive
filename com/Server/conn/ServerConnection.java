@@ -27,19 +27,20 @@ public class ServerConnection extends Thread {
     private String absolutePath;
 
     public ServerConnection(Socket socket, Server server) throws IOException {
+
+        System.out.println("New server connection");
         this.socket = socket;
         this.auth = server.getAuthInfo();
         this.absolutePath = server.getAbsolutePath();
-        this.server=server;
+        this.server = server;
         out = new ObjectOutputStream(socket.getOutputStream());
         out.flush();
         in = new ObjectInputStream(socket.getInputStream());
-        this.start();
+        // this.start();
     }
 
-    
-
     public void run() {
+        System.out.println("Entered run");
 
         CommandHandler commandHandler = new CommandHandler(this.socket, this);
 
@@ -58,12 +59,22 @@ public class ServerConnection extends Thread {
         {
             try {
                 // handle request
-                Request request = (Request) in.readObject();
-                System.out.println("Request: \"" + request + "\"");
-                commandHandler.handleRequest(request);
+                if (this.socket != null) {
+
+                    Request request = (Request) in.readObject();
+                    System.out.println("Request: \"" + request + "\"");
+                    commandHandler.handleRequest(request);
+                } else {
+                    break;
+                }
                 // and send response
             } catch (EOFException e) {
                 System.out.println("EOF:" + e);
+                try {
+                    this.socket.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
                 return;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -75,6 +86,18 @@ public class ServerConnection extends Thread {
                 ae.printStackTrace();
             }
 
+        }
+    }
+
+    public void close() {
+        try {
+            if (!socket.isClosed()) {
+                this.socket.close();
+                this.socket = null;
+            }
+        } catch (IOException e) {
+
+            e.printStackTrace();
         }
     }
 

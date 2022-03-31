@@ -18,19 +18,20 @@ import com.enums.ResponseStatus;
 public class ServerUpload extends Thread {
     private ServerConnection serverConnection;
     private ServerSocket serverSocket;
+
     public ServerUpload(ServerConnection sc, ServerSocket serverSocket) {
         this.serverConnection = sc;
-        this.serverSocket=serverSocket;
+        this.serverSocket = serverSocket;
         this.start();
     }
 
     public void run() {
         ServerSocket listenUploadSocket = serverSocket;
-        try{
-        // try(ServerSocket listenUploadSocket = new ServerSocket(0)) {
+        try {
+            // try(ServerSocket listenUploadSocket = new ServerSocket(0)) {
             // old code
             // sends port so client sends metadata here
-            
+
             // new socket to receive file
             Socket uploadSocket = listenUploadSocket.accept();
             ObjectOutputStream oos = new ObjectOutputStream(uploadSocket.getOutputStream());
@@ -57,9 +58,10 @@ public class ServerUpload extends Thread {
                     .toString();
             // ! use threadpool here
             String filePath;
+            String fileNameWithoutDirectory;
             do {
 
-                String fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/') + 1);
+                fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/') + 1);
                 filePath = Paths.get(dirPath, fileNameWithoutDirectory).toString();
                 File myObj = new File(filePath);
                 if (myObj.createNewFile()) {
@@ -68,7 +70,7 @@ public class ServerUpload extends Thread {
 
                     // ! give the file another name maybe
 
-                    System.out.println("File already exists.");
+                    System.out.println("File already exists. Removing existing one");
                 }
                 FileOutputStream fos = new FileOutputStream(myObj);
                 MessageDigest md = MessageDigest.getInstance("MD5");
@@ -109,19 +111,20 @@ public class ServerUpload extends Thread {
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
             uploadSocket.close();
             System.out.println(fileName + " : transfer complete. Now handling udp");
-            //old code
+
+            filePath = Paths.get(serverConnection.getUser().getServerDir(), fileNameWithoutDirectory).toString();
             UDPFileTransferTask uftt = new UDPFileTransferTask(
-                    byteSize, blockNumber, dirPath, fileName, true, 
+                    byteSize, blockNumber, serverConnection.getAbsolutePath(), filePath, true,
                     serverConnection.getServer().getDestinationConfig().getServerAddress(),
                     serverConnection.getServer().getDestinationConfig().getUdpFileTransferPort());
             System.out.println("adding uftt to queue ONCE");
             serverConnection.getServer().getQueueUdp().add(uftt);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch( ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-    }    
+    }
 }

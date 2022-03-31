@@ -1,6 +1,5 @@
 package com.Client;
 
-import java.io.BufferedReader;
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
@@ -44,38 +43,44 @@ public class CommandHandler {
         this.clientConnection = null;
         this.socket = null;
     }
+
     public int getPortInUse() {
         return portInUse;
     }
+
     public void setPortInUse(int portInUse) {
         this.portInUse = portInUse;
     }
+
     public InetAddress getAddInUse() {
         return addInUse;
     }
+
     public void setAddInUse(InetAddress addInUse) {
         this.addInUse = addInUse;
     }
-    public CommandHandler(ClientConnection clientConnection, Socket socket, InetAddress address, int port, ConfigClient config) {
+
+    public CommandHandler(ClientConnection clientConnection, Socket socket, InetAddress address, int port,
+            ConfigClient config) {
         this.clientConnection = clientConnection;
         this.socket = socket;
         this.config = config;
         this.setPortInUse(port);
         this.setAddInUse(address);
-        
+
     }
 
-    public void login(BufferedReader commandReader) throws SocketTimeoutException, SocketException {
+    public void login(Scanner commandReader) throws SocketTimeoutException, SocketException {
 
         while (true) {
             try {
                 System.out.println("Enter username:");
-                String username = commandReader.readLine();
+                String username = commandReader.nextLine();
                 System.out.println("Enter password:");
                 Console c = System.console();
                 String password = new String(c.readPassword());// commandReader.readLine();
                 Credentials cred = new Credentials(username, password);
-                Request login = new Request(cred.loginString());
+                Request login = new Request(cred.loginString(), "");
 
                 clientConnection.sendRequest(login);
 
@@ -95,9 +100,9 @@ public class CommandHandler {
                     default:
                         System.out.println("Login failed");
                 }
-            } catch(SocketTimeoutException | SocketException e) {
+            } catch (SocketTimeoutException | SocketException e) {
                 throw e;
-            }catch (IOException e) {
+            } catch (IOException e) {
                 System.out.println("Error while sending or reading login information");
                 e.printStackTrace();
             }
@@ -105,7 +110,7 @@ public class CommandHandler {
         }
     }
 
-    public void changePassword(BufferedReader commandReader) throws SocketTimeoutException, SocketException {
+    public void changePassword(Scanner commandReader) throws SocketTimeoutException, SocketException {
         Console cons = System.console();
         boolean first = true;
         String confirmPass, newPass;
@@ -162,7 +167,7 @@ public class CommandHandler {
         }
     }
 
-    public void changeServerWorkingDirectory(String command) throws SocketTimeoutException, SocketException{
+    public void changeServerWorkingDirectory(String command) throws SocketTimeoutException, SocketException {
 
         String dir = "";
         String[] sp = command.split(" ", 2);
@@ -191,18 +196,18 @@ public class CommandHandler {
 
         Request req = new Request("CD\n" + serverDir, Client.getToken());
         while (true) {
-                clientConnection.sendRequest(req);
-                Reply reply = clientConnection.getReply();
-                if (reply.getStatusCode().equals(ResponseStatus.OK.getStatus())) {
-                    System.out.println(reply.getMessage());
-                    Client.setServerDir(serverDir);
-                    break;
-                } else if (reply.getStatusCode().equals("Bad Request")) {
-                    System.out.println("Invalid command: " + reply.getMessage());
-                    break;
-                } else {
-                    System.out.println("Cd failed. Trying again...");
-                }
+            clientConnection.sendRequest(req);
+            Reply reply = clientConnection.getReply();
+            if (reply.getStatusCode().equals(ResponseStatus.OK.getStatus())) {
+                System.out.println(reply.getMessage());
+                Client.setServerDir(serverDir);
+                break;
+            } else if (reply.getStatusCode().equals("Bad Request")) {
+                System.out.println("Invalid command: " + reply.getMessage());
+                break;
+            } else {
+                System.out.println("Cd failed. Trying again...");
+            }
         }
     }
 
@@ -278,7 +283,7 @@ public class CommandHandler {
         }
     }
 
-    public void downloadFile(String command) throws SocketTimeoutException , SocketException {
+    public void downloadFile(String command) throws SocketTimeoutException, SocketException {
         String[] sp = command.split(" ", 2);
         if (sp.length < 2) {
             System.out.println("Command format : <download> <file name>");
@@ -291,8 +296,8 @@ public class CommandHandler {
             System.out.println("Problems acquiring the specified file: " + rep.getMessage());
             return;
         }
-        try  {
-            //! must be closed somehow
+        try {
+            // ! must be closed somehow
             ServerSocket serverSocket = new ServerSocket(0);
             // port dynamically allocated
             // !check if socket is valid
@@ -302,15 +307,15 @@ public class CommandHandler {
 
             new ClientFileDownload(serverSocket, Client.getClientDir());
 
-        } catch(SocketTimeoutException | SocketException e) {
+        } catch (SocketTimeoutException | SocketException e) {
             throw e;
-        }catch (IOException io) {
+        } catch (IOException io) {
             System.out.println("Problems trying to download: " + io.getMessage());
             io.printStackTrace();
-        } 
+        }
     }
 
-	public void uploadFile(String command) throws SocketTimeoutException, SocketException {
+    public void uploadFile(String command) throws SocketTimeoutException, SocketException {
         String[] sp = command.split(" ", 2);
         if (sp.length < 2) {
             System.out.println("Invalid command. The structure is: upload <file_name>");
@@ -324,7 +329,7 @@ public class CommandHandler {
             }
             clientConnection.constructAndSendRequest("UPLOAD", Client.getToken());
             Reply rep = clientConnection.getReply();
-            new ClientUpload(fileName, rep.getMessage() , socket.getInetAddress());
+            new ClientUpload(fileName, rep.getMessage(), socket.getInetAddress());
         } catch (Exception e) {
             System.out.println("Problems uploading file: " + e.getMessage());
         }
@@ -334,30 +339,34 @@ public class CommandHandler {
         return socket;
     }
 
-    private boolean tryToReconnect(String ip, int port){
-        try{
+    private boolean tryToReconnect(String ip, int port) {
+        try {
 
             this.socket = new Socket(ip, port);
             this.socket.setSoTimeout(Client.CLIENT_SOCKET_TIMEOUT_MILLISECONDS);
-            
+
             ObjectOutputStream oos = new ObjectOutputStream(this.socket.getOutputStream());
             oos.flush();
             ObjectInputStream ois = new ObjectInputStream(this.socket.getInputStream());
             this.clientConnection.setSocketParams(this.socket, ois, oos);
             return true;
-        } catch( IOException ioe){
+        } catch (IOException ioe) {
             ioe.printStackTrace();
             return false;
         }
     }
 
-    public boolean changeServerInfo(BufferedReader commandReader){
+    public boolean changeServerInfo(Scanner commandReader) {
 
-        try (Scanner sc = new Scanner(System.in)){
-			this.socket.close();
+        try {
+            Scanner sc = new Scanner(System.in);
+            Request abort = new Request("ABORT", Client.getToken());
+
+            clientConnection.sendRequest(abort);
+
+            this.socket.close();
             System.out.println("Client closing connection");
 
-        
             System.out.println("Enter new primary server ip: ");
             config.setPrimaryServerName(sc.next());
             System.out.println("Enter new primary server port: ");
@@ -367,30 +376,30 @@ public class CommandHandler {
             System.out.println("Enter new secondary server port: ");
             config.setSecondaryServerPort(sc.nextInt());
 
-            //tryToReconnect();
+            // tryToReconnect();
             // ! check if primary is down
-            if (!tryToReconnect(config.getPrimaryServerName(), config.getPrimaryServerPort())){
-                if (!tryToReconnect(config.getSecondaryServerName(), config.getSecondaryServerPort())){
+            if (!tryToReconnect(config.getPrimaryServerName(), config.getPrimaryServerPort())) {
+                if (!tryToReconnect(config.getSecondaryServerName(), config.getSecondaryServerPort())) {
                     System.out.println("Servers are down or your information is incorrect");
                     System.out.println("Could not connect. Shutting down client application");
                     return true; // true means exit
                 }
             }
-            
 
             System.out.println("Enter your credentials again");
-            login(commandReader);    
+            login(commandReader);
 
-            return false; // false means the app continues 
+            return false; // false means the app continues
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return true; // truen means exit
 
     }
 
-    public boolean handleCommand(String line, BufferedReader commandReader) throws SocketTimeoutException, SocketException {
+    public boolean handleCommand(String line, Scanner commandReader)
+            throws SocketTimeoutException, SocketException {
         String[] commands = line.split(" ", 2);
         String command = commands[0];
         switch (command) {

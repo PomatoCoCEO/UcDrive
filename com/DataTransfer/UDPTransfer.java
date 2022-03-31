@@ -45,7 +45,7 @@ public class UDPTransfer extends Thread {
         this.send = uftt.isSend();
         this.destinationAddress = uftt.getDestinationAddress();
         this.destinationPort = uftt.getDestinationPort();
-        //! this.start(); was taken because the executor handles it
+        // ! this.start(); was taken because the executor handles it
     }
 
     public void run() {
@@ -57,7 +57,8 @@ public class UDPTransfer extends Thread {
     }
 
     /**
-     * Calculate the MD5 hash of the input string and return the hash as a hex string
+     * Calculate the MD5 hash of the input string and return the hash as a hex
+     * string
      * 
      * @param md The MessageDigest object that contains the digest algorithm.
      * @return The MD5 hash of the input string.
@@ -76,7 +77,7 @@ public class UDPTransfer extends Thread {
      * Send a string to the destination address and port
      * 
      * @param ds The DatagramSocket object that will be used to send the message.
-     * @param s The string to send.
+     * @param s  The string to send.
      */
     private void sendString(DatagramSocket ds, String s) {
         DatagramPacket dp = new DatagramPacket(s.getBytes(), s.length(), destinationAddress, destinationPort);
@@ -91,7 +92,7 @@ public class UDPTransfer extends Thread {
     /**
      * Receive a packet from a socket and return the bytes of the packet
      * 
-     * @param ds The DatagramSocket object that we created earlier.
+     * @param ds     The DatagramSocket object that we created earlier.
      * @param length The number of bytes to receive.
      * @return The byte array of the received message.
      */
@@ -107,9 +108,9 @@ public class UDPTransfer extends Thread {
         return buffer;
     }
 
-   /**
-    * Send a file to the destination
-    */
+    /**
+     * Send a file to the destination
+     */
     private void sendFile() {
         try {
             // String fileName = absolutePath.substring(absolutePath.lastIndexOf("/")+1); //
@@ -120,7 +121,7 @@ public class UDPTransfer extends Thread {
             String fileInfo = "FILE " + filePath + "\nSIZE " + byteSize + "\nBLOCKS " + noBlocks + "\nPORT "
                     + destinationPort;
             sendString(ds, fileInfo);
-            System.out.println("File metadata to send: "+fileInfo);
+            System.out.println("File metadata to send: " + fileInfo);
             // read ok
             // change destination port
             byte[] reply = new byte[BLOCK_BYTE_SIZE];
@@ -155,7 +156,7 @@ public class UDPTransfer extends Thread {
                 if (!md5Result.equals(md5Secondary)) {
                     newInfo = false;
                     sendString(ds, "ERROR MD5");
-                    System.out.println("DIFFERENT MD5 "+md5Secondary+" "+md5Result);
+                    System.out.println("DIFFERENT MD5 " + md5Secondary + " " + md5Result);
                 } else {
                     System.out.println("Sending ok...");
                     newInfo = true;
@@ -199,36 +200,36 @@ public class UDPTransfer extends Thread {
             MessageDigest md = MessageDigest.getInstance("MD5"), clone;
             byte[][] cache = new byte[NO_BLOCKS_TRANSFER][BLOCK_BYTE_SIZE];
             int[] lengths = new int[NO_BLOCKS_TRANSFER];
-            System.out.println("Blocks read: "+blocksRead);
-            System.out.println("noBlocks: "+ noBlocks);
+            System.out.println("Blocks read: " + blocksRead);
+            System.out.println("noBlocks: " + noBlocks);
             while (blocksRead < noBlocks) {
                 clone = (MessageDigest) md.clone();
                 for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
-                    // int aid = 
+                    // int aid =
                     DatagramPacket reply = new DatagramPacket(cache[i], cache[i].length);
-                    ds.receive(reply); //! use timeout here
+                    ds.receive(reply); // ! use timeout here
                     lengths[i] = reply.getLength();
-                    System.out.println("Received block: "+new String(reply.getData()));
+                    // System.out.println("Received block: " + new String(reply.getData()));
                     md.update(cache[i], 0, reply.getLength());
                 }
                 String md5 = calculateMD5(md);
                 sendString(ds, md5);
                 System.out.println("Waiting for ok...");
                 String ans = new String(receiveBytes(ds, BLOCK_BYTE_SIZE)).trim();
-                System.out.println("ans = "+ans);
+                System.out.println("ans = " + ans);
                 if (ans.equals("OK")) {
                     for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
                         if (lengths[i] < BLOCK_BYTE_SIZE) {
-                            byte [] toCopy = Arrays.copyOf(cache[i], lengths[i]);
+                            byte[] toCopy = Arrays.copyOf(cache[i], lengths[i]);
                             fos.write(toCopy);
-                        }
-                        else fos.write(cache[i]);
+                        } else
+                            fos.write(cache[i]);
                         fos.flush();
                     }
                     blocksRead += Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER);
                 } else { // SENDS "ERROR MD5"
                     md = clone;
-                    System.out.println("Message: "+ans);
+                    System.out.println("Message: " + ans);
                     System.out.println("Error in udp transfer, trying again");
                     try {
                         Thread.sleep(1000);
