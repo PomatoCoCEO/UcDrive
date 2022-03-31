@@ -31,10 +31,11 @@ public class Heartbeat extends Thread {
         while (noFailedHeartbeats < ALLOWED_HEARTBEAT_FAILURES) {
             DatagramPacket request = new DatagramPacket(message.getBytes(), message.length(), cs.getServerAddress(),
                     cs.getUdpHeartbeatPort());
-            System.out.println("Secondary server heartbeat");
-            System.out.println("Sending datagram to port "+request.getPort()+
-                    ", address "+request.getAddress()+", content "+request.getData());
-            System.out.println("Original port is "+ds.getLocalPort());
+            // System.out.println("Secondary server heartbeat");
+            // System.out.println("Sending datagram to port "+request.getPort()+
+            //         ", address "+request.getAddress()+", content "+request.getData());
+            // System.out.println("Original port is "+ds.getLocalPort());
+            System.out.print("s");
             try {
                 ds.send(request);
                 byte[] buffer = new byte[1000];
@@ -72,7 +73,8 @@ public class Heartbeat extends Thread {
             DatagramPacket request = new DatagramPacket(message.getBytes(), message.length(), cs.getServerAddress(),
                     cs.getUdpHeartbeatPort());
             try {
-                System.out.println("Primary heartbeat sending datagram to port "+request.getPort()+", address "+request.getAddress()+", content "+request.getData());
+                //System.out.println("Primary heartbeat sending datagram to port "+request.getPort()+", address "+request.getAddress()+", content "+request.getData());
+                System.out.print("p");
                 ds.send(request);
                 byte[] buffer = new byte[1000]; // ! this is a magic number
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);

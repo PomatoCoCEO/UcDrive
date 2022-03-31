@@ -13,7 +13,7 @@ public class UDPFileTransferTask {
     private boolean send;
     private InetAddress destinationAddress;
     private int destinationPort;
-    private Server server;
+    // private Server server;
     
     public UDPFileTransferTask(long byteSize, long noBlocks, String absolutePath, String filePath, boolean send,
             InetAddress destinationAddress, int destinationPort) {

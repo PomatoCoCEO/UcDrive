@@ -31,8 +31,6 @@ public class ServerUpload extends Thread {
             // old code
             // sends port so client sends metadata here
             
-            
-
             // new socket to receive file
             Socket uploadSocket = listenUploadSocket.accept();
             ObjectOutputStream oos = new ObjectOutputStream(uploadSocket.getOutputStream());
@@ -57,10 +55,7 @@ public class ServerUpload extends Thread {
             System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", fileName, byteSize, blockNumber);
             String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
                     .toString();
-
             // ! use threadpool here
-            // FileTransferTask ftt = new FileTransferTask(false, uploadSocket, dirPath, fileName, byteSize, blockNumber);
-            // serverConnection.getServer().getQueueFileRcv().add(ftt);
             String filePath;
             do {
 
@@ -113,8 +108,14 @@ public class ServerUpload extends Thread {
                 oos.flush();
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
             uploadSocket.close();
-            System.out.println(fileName + " : transfer complete");
+            System.out.println(fileName + " : transfer complete. Now handling udp");
             //old code
+            UDPFileTransferTask uftt = new UDPFileTransferTask(
+                    byteSize, blockNumber, dirPath, fileName, true, 
+                    serverConnection.getServer().getDestinationConfig().getServerAddress(),
+                    serverConnection.getServer().getDestinationConfig().getUdpFileTransferPort());
+            System.out.println("adding uftt to queue ONCE");
+            serverConnection.getServer().getQueueUdp().add(uftt);
         } catch (IOException e) {
             e.printStackTrace();
         } catch( ClassNotFoundException e) {

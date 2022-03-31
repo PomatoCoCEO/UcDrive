@@ -116,7 +116,7 @@ public class Client {
         } catch (UnknownHostException e) {
             System.out.println("Sock:" + e.getMessage());
 
-        }catch(SocketException e) {
+        } catch(SocketException e) {
             System.out.println("Switch 2: "+ e.getMessage());
             commandHandler= switchServer(commandHandler, clientConnection);
         } catch (IOException io) {

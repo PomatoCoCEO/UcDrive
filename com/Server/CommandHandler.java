@@ -107,6 +107,7 @@ public class CommandHandler {
         // ! use threadpool here
 
         FileDownloadTask ftt = new FileDownloadTask( filePath.toString(),socket.getInetAddress(), portNo, serverConnection );
+
         serverConnection.getServer().getQueueFileSend().add(ftt);
             
         //new ServerDownload(socket.getInetAddress(), portNo, absolutePath, fileName, serverConnection);
@@ -118,6 +119,7 @@ public class CommandHandler {
 
     public void handleUpload() {
         try{
+            System.out.println("Handling upload"); // handles upload only once
             ServerSocket listenUploadSocket = new ServerSocket(0);
             System.out.println("New port opened for file transfer: "+ listenUploadSocket.getLocalPort());
             serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(),

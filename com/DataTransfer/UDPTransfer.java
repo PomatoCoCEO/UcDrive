@@ -45,10 +45,11 @@ public class UDPTransfer extends Thread {
         this.send = uftt.isSend();
         this.destinationAddress = uftt.getDestinationAddress();
         this.destinationPort = uftt.getDestinationPort();
-        this.start();
+        //! this.start(); was taken because the executor handles it
     }
 
     public void run() {
+        System.out.println("EXECUTING UDP TRANSFER");
         if (send)
             sendFile();
         else
@@ -119,7 +120,7 @@ public class UDPTransfer extends Thread {
             String fileInfo = "FILE " + filePath + "\nSIZE " + byteSize + "\nBLOCKS " + noBlocks + "\nPORT "
                     + destinationPort;
             sendString(ds, fileInfo);
-
+            System.out.println("File metadata to send: "+fileInfo);
             // read ok
             // change destination port
             byte[] reply = new byte[BLOCK_BYTE_SIZE];
@@ -147,14 +148,16 @@ public class UDPTransfer extends Thread {
                             destinationPort);
                     ds.send(dpBlock);
                 }
-
+                System.out.println("Sent block tranch");
                 String md5Secondary = new String(receiveBytes(ds, (int) BLOCK_BYTE_SIZE)).trim();
                 String md5Result = calculateMD5(md);
+                System.out.println("MD5s : " + md5Secondary + " and " + md5Result);
                 if (!md5Result.equals(md5Secondary)) {
                     newInfo = false;
                     sendString(ds, "ERROR MD5");
                     System.out.println("DIFFERENT MD5 "+md5Secondary+" "+md5Result);
                 } else {
+                    System.out.println("Sending ok...");
                     newInfo = true;
                     sendString(ds, "OK");
                     blocksSent += NO_BLOCKS_TRANSFER;
@@ -181,6 +184,7 @@ public class UDPTransfer extends Thread {
             DatagramSocket ds = new DatagramSocket();
             sendString(ds, "OK");
             ds.setSoTimeout(UDP_SOCKET_TIMEOUT);
+            System.out.println("Sent ok");
             String path = Paths.get(absolutePath, filePath).toString();
             File myObj = new File(path);
             if (myObj.createNewFile()) {
@@ -204,12 +208,14 @@ public class UDPTransfer extends Thread {
                     DatagramPacket reply = new DatagramPacket(cache[i], cache[i].length);
                     ds.receive(reply); //! use timeout here
                     lengths[i] = reply.getLength();
-                    long aid = byteSize-(blocksRead-i)*BLOCK_BYTE_SIZE;
+                    System.out.println("Received block: "+new String(reply.getData()));
                     md.update(cache[i], 0, reply.getLength());
                 }
                 String md5 = calculateMD5(md);
                 sendString(ds, md5);
+                System.out.println("Waiting for ok...");
                 String ans = new String(receiveBytes(ds, BLOCK_BYTE_SIZE)).trim();
+                System.out.println("ans = "+ans);
                 if (ans.equals("OK")) {
                     for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
                         if (lengths[i] < BLOCK_BYTE_SIZE) {
