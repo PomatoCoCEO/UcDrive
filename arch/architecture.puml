@@ -1,0 +1,37 @@
+@startuml arch
+'default
+left to right direction
+skinparam ControlBackgroundColor #00ffff
+skinparam ControlBorderColor #0000ff
+skinparam ArrowColor #ff0000
+skinparam ControlFontName Consolas
+component client as "Client"{
+    control "TCP File\nSender/Receiver" AS tcp_client_file_sender_receiver
+    control "Command\nHandler" AS command_handler
+}
+
+component primary_server as "Primary Server" {
+    control "Command\nReceivers" AS command_receivers
+    control "TCP File\nSender/Receiver" AS tcp_server_file_sender_receiver
+    control "Failover\nCommand\nSender" AS failover_command_sender
+    control "UDP File\nSender" AS udp_file_sender
+    control "Primary\nHeartbeat" AS primary_heartbeat
+}
+
+component secondary_server as "Secondary Server" {
+    control "Secondary\nHeartbeat" AS secondary_heartbeat
+    control "Failover\nCommand\nExecutor" AS failover_command_executor
+    control "UDP File\nReceivers" AS udp_file_receivers
+}
+
+primary_heartbeat <-> secondary_heartbeat : Ping exchange
+command_handler <--> command_receivers: Command\nchannel
+command_receivers -right-> failover_command_sender: Command
+command_receivers --> tcp_server_file_sender_receiver: File Transfer\nCommands
+tcp_server_file_sender_receiver --> udp_file_sender: Failover\nfile transfer
+tcp_client_file_sender_receiver <-right-> tcp_server_file_sender_receiver: Data channel
+udp_file_sender --> udp_file_receivers: Uploaded File
+failover_command_sender --> failover_command_executor: State-changing\ncommands
+
+
+@enduml
