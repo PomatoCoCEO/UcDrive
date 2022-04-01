@@ -1,6 +1,8 @@
 package com.Server;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -13,7 +15,10 @@ import java.nio.file.Paths;
 
 import com.DataTransfer.Reply;
 import com.DataTransfer.Request;
-import com.DataTransfer.UDPTransfer;
+import com.DataTransfer.tasks.FileDownloadTask;
+import com.DataTransfer.tasks.FileUploadTask;
+import com.DataTransfer.threads.ServerDownload;
+import com.DataTransfer.threads.UDPTransfer;
 import com.Server.auth.User;
 import com.Server.auth.Auth.Operation;
 import com.Server.config.ConfigServer;
@@ -21,9 +26,6 @@ import com.Server.conn.ServerConnection;
 import com.Server.except.AuthorizationException;
 import com.enums.ResponseStatus;
 import com.DataTransfer.FileTransfer;
-import com.DataTransfer.FileDownloadTask;
-import com.DataTransfer.FileUploadTask;
-import com.DataTransfer.ServerDownload;
 
 public class CommandHandler {
     Socket socket;
@@ -95,7 +97,7 @@ public class CommandHandler {
             return;
         }
         serverConnection.constructAndSendReply("FILE EXISTS", ResponseStatus.OK.getStatus());
-        // ! this section of code needs to remain here because the request should be
+        // ? this section of code needs to remain here because the request should be
         // handled in a single thread
         System.out.println("File exists sent");
         Request portNoReq = serverConnection.getRequest();
@@ -107,8 +109,6 @@ public class CommandHandler {
         }
         int portNo = Integer.parseInt(msgPort[1]);
         System.out.println("Got port: " + portNo);
-
-        // ! use threadpool here
 
         FileDownloadTask ftt = new FileDownloadTask(filePath.toString(), socket.getInetAddress(), portNo,
                 serverConnection);
@@ -184,6 +184,9 @@ public class CommandHandler {
         System.out.println("Changed");
         Reply reply = new Reply("Password changed!", ResponseStatus.OK.getStatus());
         serverConnection.sendReply(reply);
+        String failOverChangePassword = "CH-PASS\n" + serverConnection.getUser().getUsername() + "\n" + newPassword;
+        serverConnection.getServer().getThreadPoolUdpCommandSend()
+                .execute(new UDPCommandSender(serverConnection.getServer(), failOverChangePassword));
     }
 
     private void handleLs(Request request) {
@@ -241,6 +244,26 @@ public class CommandHandler {
             serverConnection.getUser().setServerDir(relativePath);
             serverConnection.getAuth().changeUsers(Operation.CHANGE, serverConnection.getUser());
             serverConnection.constructAndSendReply("Directory changed", ResponseStatus.OK.getStatus());
+
+            User user = serverConnection.getUser();
+            try {
+                String pathWrite = Paths.get(serverConnection.getServer().getConfigPath(), "usr", user.getUsername())
+                        .toString();
+                BufferedWriter writer = new BufferedWriter(
+                        new FileWriter(pathWrite));
+                writer.write(user.toFileString());
+
+                writer.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            String failOverCd = "SCD\n" + serverConnection.getUser().getUsername() + "\n" + relativePath;
+            serverConnection.getServer().getThreadPoolUdpCommandSend()
+                    .execute(new UDPCommandSender(serverConnection.getServer(), failOverCd));
+            // ! send to secondary
+
         } catch (IOException io) {
             serverConnection.constructAndSendReply("Invalid directory", "Bad Request");
             io.printStackTrace();

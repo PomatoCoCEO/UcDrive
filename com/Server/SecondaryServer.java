@@ -1,14 +1,16 @@
 package com.Server;
 
 import com.Server.config.ConfigServer;
+import com.Server.heartbeats.PrimaryHeartbeat;
+import com.Server.heartbeats.SecondaryHeartbeat;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
 public class SecondaryServer extends Server {
 
-    public SecondaryServer(String ownConfigFile, String otherConfigFile, String absPath) {
-        super(ownConfigFile, otherConfigFile, absPath);
+    public SecondaryServer(String ownConfigFile, String otherConfigFile, String absPath, String configPath) {
+        super(ownConfigFile, otherConfigFile, absPath, configPath);
     }
 
     public void work() {
@@ -22,10 +24,12 @@ public class SecondaryServer extends Server {
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
             SecondaryHeartbeat sh = new SecondaryHeartbeat(ds, primaryServerConfig);
             UDPAccept udpAccept = new UDPAccept(this); // we need to use our config
+            UDPCommandReceiver ucr = new UDPCommandReceiver(this);
             // here we should make another thread to accept the dup connections
             sh.join();
             System.out.println("Secondary heartbeat joined.");
             udpAccept.interrupt();
+            ucr.interrupt();
             // after the server knows it will replace the primary server
             System.out.println("UDP transfer thread interrupted.");
             // it should kill the file receipt thread
@@ -55,7 +59,8 @@ public class SecondaryServer extends Server {
 
     public static void main(String[] args) {
         String absPath = System.getProperty("user.dir") + "/com/Server/secondary/data";
-        SecondaryServer ss = new SecondaryServer("Sconfig", "Pconfig", absPath);
+        String configPath = System.getProperty("user.dir") + "/com/Server/secondary/runfiles";
+        SecondaryServer ss = new SecondaryServer("Sconfig", "Pconfig", absPath, configPath);
         ss.work();
 
     }

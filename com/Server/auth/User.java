@@ -60,6 +60,10 @@ public class User implements Comparable {
         return "<" + username + ">\n<" + passwordHash + ">\n<" + serverDir + ">\n<" + clientDir + ">";
     }
 
+    public String toFileString() {
+        return  username + "\n" + passwordHash + "\n" + serverDir + "\n" + clientDir +"\n";
+    }
+
     @Override
     public int compareTo(Object o) {
         // TODO Auto-generated method stub

@@ -1,13 +1,12 @@
 package com.Server;
 
-import com.DataTransfer.FileDownloadTask;
-import com.DataTransfer.FileTransferDownloadCreator;
-import com.DataTransfer.FileTransferUdpCreator;
-import com.DataTransfer.FileTransferUploadCreator;
-import com.DataTransfer.FileDownloadTask;
-import com.DataTransfer.FileUploadTask;
-import com.DataTransfer.UDPFileTransferTask;
-import com.DataTransfer.UDPTransfer;
+import com.DataTransfer.creators.FileTransferDownloadCreator;
+import com.DataTransfer.creators.FileTransferUdpCreator;
+import com.DataTransfer.creators.FileTransferUploadCreator;
+import com.DataTransfer.tasks.FileDownloadTask;
+import com.DataTransfer.tasks.FileUploadTask;
+import com.DataTransfer.tasks.UDPFileTransferTask;
+import com.DataTransfer.threads.UDPTransfer;
 import com.Server.auth.*;
 import com.Server.config.ConfigServer;
 import com.Server.conn.ServerConnection;
@@ -32,7 +31,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Server {
     protected ServerSocket serverSocket;
-    protected String absolutePath;
+    protected String absolutePath, configPath;
     protected final static int SOCKET_TIMEOUT_MILLISECONDS = 1000;
     protected final static int THREADS_PER_POOL = 10;
     protected final static int BLOCKING_QUEUE_SIZE = 100;
@@ -46,22 +45,23 @@ public class Server {
     protected ExecutorService threadPoolTcpAccept;
     protected ExecutorService threadPoolUDPSend;
     protected ExecutorService threadPoolUDPReceive;
+    protected ExecutorService threadPoolUDPCommandSend;
 
     public Server() {
     }
 
-    public Server(String ownConfigFile, String otherConfigFile, String absPath) {
+    public Server(String ownConfigFile, String otherConfigFile, String absPath, String configPath) {
         this.absolutePath = absPath;
+        this.configPath = configPath;
         try {
             System.out.println("Current directory: " + System.getProperty("user.dir"));
 
-            authenticationInfo = new Auth("com/Server/runfiles/users", this);
-            ownConfig = new ConfigServer("com/Server/runfiles/" + ownConfigFile);
-            otherConfig = new ConfigServer("com/Server/runfiles/" + otherConfigFile);
+            authenticationInfo = new Auth(this);
+            ownConfig = new ConfigServer(Paths.get(configPath, ownConfigFile).toString());
+            otherConfig = new ConfigServer(Paths.get(configPath, otherConfigFile).toString());
             System.out.println("Server's own config: " + ownConfig);
             System.out.println("Server's mate config: " + otherConfig);
-            serverSocket = new ServerSocket(ownConfig.getTcpSocketPort());
-            System.out.println("LISTEN SOCKET=" + serverSocket);
+
             queueFileRcv = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE); // for file transfers with clients
             queueFileSend = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE); // for file transfers with downloads
             queueUdp = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE); // for file transfers with the secondary server
@@ -73,9 +73,18 @@ public class Server {
 
     public void bePrimary() {
         // create threadPools
+        try {
+            authenticationInfo = new Auth(this);
+            serverSocket = new ServerSocket(ownConfig.getTcpSocketPort());
+            System.out.println("LISTEN SOCKET=" + serverSocket);
+        } catch (IOException io) {
+            io.printStackTrace();
+            return;
+        }
         threadPoolFileTasks = Executors.newFixedThreadPool(THREADS_PER_POOL);
         threadPoolUDPSend = Executors.newFixedThreadPool(THREADS_PER_POOL);
         threadPoolTcpAccept = Executors.newFixedThreadPool(THREADS_PER_POOL);
+        threadPoolUDPCommandSend = Executors.newFixedThreadPool(THREADS_PER_POOL);
         TCPAccept tcpa = new TCPAccept(this);
         FileTransferUploadCreator fttc = new FileTransferUploadCreator(this);
         FileTransferDownloadCreator ftdc = new FileTransferDownloadCreator(this);
@@ -98,6 +107,10 @@ public class Server {
         return absolutePath;
     }
 
+    public String getConfigPath() {
+        return configPath;
+    }
+
     public ServerSocket getServerSocket() {
         return serverSocket;
     }
@@ -116,6 +129,10 @@ public class Server {
 
     public ExecutorService getThreadPoolFiles() {
         return threadPoolFileTasks;
+    }
+
+    public ExecutorService getThreadPoolUdpCommandSend() {
+        return threadPoolUDPCommandSend;
     }
 
     public ExecutorService getThreadPoolUDPSend() {

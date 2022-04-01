@@ -13,6 +13,8 @@ import java.io.*;
 import java.io.ObjectInputFilter.Config;
 import java.net.*;
 import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import com.User.Credentials;
 
@@ -23,6 +25,9 @@ public class Client {
     private static String clientDir;
     private static ConfigClient config;
     private static boolean connectedToPrimary = true;
+    protected static BlockingQueue<String> commandQueue;
+    public static final int BLOCKING_QUEUE_SIZE = 10;
+
     public static final int CLIENT_SOCKET_TIMEOUT_MILLISECONDS = 2000;
 
     public static CommandHandler switchServer(CommandHandler handler, ClientConnection cc, Scanner commandReader) {
@@ -55,6 +60,17 @@ public class Client {
             System.out.println("Enter your credentials again");
             newHandler.login(commandReader);
 
+            while (!commandQueue.isEmpty()) {
+                try {
+                    String command = commandQueue.take();
+                    System.out.println("Result of command: " + command);
+                    newHandler.handleCommand(command, commandReader);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+
             return newHandler;
         } catch (UnknownHostException e) {
             // TODO Auto-generated catch block
@@ -70,6 +86,7 @@ public class Client {
         // read servers' info from config file
 
         config = new ConfigClient("com/Client/config");
+        commandQueue = new LinkedBlockingQueue<>(BLOCKING_QUEUE_SIZE);
 
         CommandHandler commandHandler = new CommandHandler();
         ClientConnection clientConnection = new ClientConnection();
@@ -113,6 +130,7 @@ public class Client {
 
                 } catch (SocketTimeoutException | SocketException e) {
                     System.out.println("Switch 1");
+                    commandQueue.add(command);
                     commandHandler = switchServer(commandHandler, clientConnection, commandReader);
                     if (commandHandler.getSocket() == null) {
                         System.out.println("Client could not connect to any server. Exiting client");
@@ -147,6 +165,10 @@ public class Client {
                 }
             }
         }
+    }
+
+    public static BlockingQueue<String> getCommandQueue() {
+        return commandQueue;
     }
 
     public static String getClientDir() {

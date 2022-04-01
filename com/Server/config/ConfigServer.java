@@ -11,6 +11,7 @@ public class ConfigServer {
     private int tcpSocketPort;
     private int udpFileTransferPort;
     private int udpHeartbeatPort;
+    private int udpCommandReceiverPort;
     private InetAddress serverAddress;
 
     public ConfigServer(String fileName) {
@@ -21,6 +22,7 @@ public class ConfigServer {
             this.setTcpSocketPort(Integer.parseInt(sc.nextLine()));
             this.setUdpFileTransferPort(Integer.parseInt(sc.nextLine()));
             this.setUdpHeartbeatPort(Integer.parseInt(sc.nextLine()));
+            this.setUdpCommandReceiverPort(Integer.parseInt(sc.nextLine()));
         } catch (FileNotFoundException f) {
             System.out.println("File not found: " + f.getMessage());
             f.printStackTrace();
@@ -28,6 +30,14 @@ public class ConfigServer {
             System.out.println("Problems in host address determination: " + uhe.getMessage());
             uhe.printStackTrace();
         }
+    }
+
+    public int getUdpCommandReceiverPort() {
+        return udpCommandReceiverPort;
+    }
+
+    public void setUdpCommandReceiverPort(int udpCommandReceiverPort) {
+        this.udpCommandReceiverPort = udpCommandReceiverPort;
     }
 
     public InetAddress getServerAddress() {
@@ -62,9 +72,9 @@ public class ConfigServer {
         this.udpHeartbeatPort = udpHeartbeatPort;
     }
 
-    public String toString () {
-        return "Config: ip address "+serverAddress.toString()+";\nudp file port "+udpFileTransferPort+
-            ";\nudp heartbeat port "+udpHeartbeatPort+";\ntcp socket port "+tcpSocketPort;
+    public String toString() {
+        return "Config: ip address " + serverAddress.toString() + ";\nudp file port " + udpFileTransferPort +
+                ";\nudp heartbeat port " + udpHeartbeatPort + ";\ntcp socket port " + tcpSocketPort;
     }
 
 }

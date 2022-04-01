@@ -1,11 +1,13 @@
 package com.Server;
 
-import com.DataTransfer.FileTransferDownloadCreator;
-import com.DataTransfer.FileTransferUdpCreator;
-import com.DataTransfer.FileTransferUploadCreator;
+import com.DataTransfer.creators.FileTransferDownloadCreator;
+import com.DataTransfer.creators.FileTransferUdpCreator;
+import com.DataTransfer.creators.FileTransferUploadCreator;
 import com.Server.auth.*;
 import com.Server.config.ConfigServer;
 import com.Server.conn.ServerConnection;
+import com.Server.heartbeats.PrimaryHeartbeat;
+import com.Server.heartbeats.SecondaryHeartbeat;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -23,13 +25,13 @@ import java.util.concurrent.Executors;
 
 public class PrimaryServer extends Server {
 
-    public PrimaryServer(String ownConfigFile, String otherConfigFile, String absPath) {
-        super(ownConfigFile, otherConfigFile, absPath);
+    public PrimaryServer(String ownConfigFile, String otherConfigFile, String absPath, String configPath) {
+        super(ownConfigFile, otherConfigFile, absPath, configPath);
     }
 
     public void work() {
         try {
-            ConfigServer secondaryServerConfig = new ConfigServer("com/Server/runfiles/Sconfig");
+            ConfigServer secondaryServerConfig = otherConfig;
             DatagramSocket ds = new DatagramSocket(ownConfig.getUdpHeartbeatPort());
             // ! here the port must be the one in the configuration
             ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
@@ -83,8 +85,9 @@ public class PrimaryServer extends Server {
 
     public static void main(String[] args) {
         String absPath = System.getProperty("user.dir") + "/com/Server/primary/data";
+        String configPath = System.getProperty("user.dir") + "/com/Server/primary/runfiles";
 
-        PrimaryServer ps = new PrimaryServer("Pconfig", "Sconfig", absPath);
+        PrimaryServer ps = new PrimaryServer("Pconfig", "Sconfig", absPath, configPath);
         // one configuration is relative to the server itself,
         // the other is relative to the secondary server
         ps.work();

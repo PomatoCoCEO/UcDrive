@@ -20,12 +20,12 @@ import java.util.Scanner;
 
 import com.Client.config.ConfigClient;
 import com.Client.conn.ClientConnection;
-import com.DataTransfer.ClientFileDownload;
-import com.DataTransfer.ClientUpload;
-import com.DataTransfer.FileChunk;
 import com.DataTransfer.FileTransfer;
 import com.DataTransfer.Reply;
 import com.DataTransfer.Request;
+import com.DataTransfer.chunks.FileChunk;
+import com.DataTransfer.threads.ClientFileDownload;
+import com.DataTransfer.threads.ClientUpload;
 import com.Server.conn.ServerConnection;
 import com.User.Credentials;
 import com.enums.ResponseStatus;

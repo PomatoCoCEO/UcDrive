@@ -19,32 +19,36 @@ import java.util.Arrays;
 
 import com.Client.Client;
 import com.Client.conn.ClientConnection;
+import com.DataTransfer.chunks.FileChunk;
+import com.DataTransfer.FileTransfer;
+import com.DataTransfer.Reply;
+import com.DataTransfer.props.Properties;
 import com.enums.ResponseStatus;
 
-public class ClientUpload extends Thread{
+public class ClientUpload extends Thread {
     private String fileName;
     private String replyWithPort;
     private InetAddress address;
-    public static final int BLOCK_BYTE_SIZE = 8192;
-    
+    public static final int BLOCK_BYTE_SIZE = Properties.BLOCK_BYTE_SIZE;
+
     public ClientUpload(String fileName, String replyWithPort, InetAddress address) {
         this.fileName = fileName;
         this.replyWithPort = replyWithPort;
-        this.address= address;
+        this.address = address;
         this.start();
     }
 
-    
     public void run() {
         try {
             sendFile();
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
     /**
-     * Calculate the MD5 hash of the input string and return the hash as a hex string
+     * Calculate the MD5 hash of the input string and return the hash as a hex
+     * string
      * 
      * @param md The MessageDigest object that contains the digest algorithm.
      * @return The MD5 hash of the input string.
@@ -59,10 +63,9 @@ public class ClientUpload extends Thread{
         return sb.toString();
     }
 
-
     private void sendFile() throws SocketTimeoutException, SocketException {
         try {
-            
+
             String[] portInfoSp = replyWithPort.split(" ");
             if (!portInfoSp[0].equals("PORT")) {
                 System.out.println("Problems uploading file: " + replyWithPort);
@@ -79,10 +82,9 @@ public class ClientUpload extends Thread{
                     + (bytes % (FileTransfer.BLOCK_BYTE_SIZE) == 0 ? 0 : 1);
             System.out.println();
 
-
             Reply rep = new Reply("FILE\n" + fileName + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
                     ResponseStatus.OK.getStatus());
-            System.out.println("Sending reply with file metadata: "+rep);
+            System.out.println("Sending reply with file metadata: " + rep);
             oos.writeObject(rep);
             oos.flush();
 
@@ -95,7 +97,7 @@ public class ClientUpload extends Thread{
                 byte[] toSend = new byte[BLOCK_BYTE_SIZE];
                 for (int i = 0; i < noBlocks; i++) {
                     int bytesToSend = dis.read(toSend);
-
+                    System.out.println("bytes to send: " + bytesToSend);
                     FileChunk fc = new FileChunk(Arrays.copyOf(toSend, bytesToSend));
                     oos.writeObject(fc);
                     oos.flush();
@@ -118,12 +120,14 @@ public class ClientUpload extends Thread{
 
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
             System.out.println("MD5 match");
-        } catch(SocketTimeoutException | SocketException e) {
+        } catch (SocketTimeoutException | SocketException e) {
+            String command = "UPLOAD " + fileName;
+            System.out.println("Adding command to the pool: " + command);
+            Client.getCommandQueue().add(command);
             throw e;
-        } catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
@@ -132,5 +136,4 @@ public class ClientUpload extends Thread{
         }
     }
 
-    
 }

@@ -18,6 +18,9 @@ public class TCPAccept extends Thread {
     }
 
     private void acceptTcp() {
+
+        
+
         while (true) {
             System.out.println("Estou a aceitar clientes");
             try {

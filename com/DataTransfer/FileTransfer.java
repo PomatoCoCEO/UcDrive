@@ -15,6 +15,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 import com.Client.Client;
+import com.DataTransfer.chunks.FileChunk;
+import com.DataTransfer.props.Properties;
 import com.Server.Server;
 import com.enums.ResponseStatus;
 
@@ -23,7 +25,7 @@ public class FileTransfer extends Thread {
     protected ObjectOutputStream oos;
     protected long byteSize, noBlocks;
     protected String dirPath, fileName;
-    public static final int BLOCK_BYTE_SIZE = 8192;
+    public static final int BLOCK_BYTE_SIZE = Properties.BLOCK_BYTE_SIZE;
     protected boolean send;
 
     public FileTransfer(){
