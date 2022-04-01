@@ -1,0 +1,19 @@
+@startuml upload
+skinparam sequenceMessageAlign CENTER
+'skinparam ParticipantBackgroundColor #00ffff
+'skinparam ParticipantBorderColor #0000ff these are comments, started with '
+skinparam NoteTextAlignment CENTER
+client -> server : UPLOAD
+rnote over server
+Create
+new port
+end note
+server -> client : PORT <PORT_NO>
+client ->server : FILE <NAME> SIZE <BYTE_SIZE> BLOCKS <NO_BLOCKS> 
+rnote over client
+Transfer file
+end note
+client ->server : BLOCK 1
+client ->server : BLOCK 2
+client -> server: ...
+@enduml

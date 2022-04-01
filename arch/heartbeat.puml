@@ -1,0 +1,32 @@
+@startuml
+participant "Primary Server" as ps
+participant "Secondary Server" as ss
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+ps ->ss: I AM PRIMARY
+ss -> ps: I AM SECONDARY
+ps -> ss: (continue until primary server fails)
+ss-> ps
+rnote over ps
+FAILURE
+end note
+rnote over ss
+missing heartbeats,
+switch to primary
+end note
+ss -> ps: I AM PRIMARY
+ss -> ps: I AM PRIMARY (...)
+ss -> ps:
+RNOTE OVER ps
+server
+restored
+end note
+ss -> ps: I AM PRIMARY
+RNOTE OVER ps
+detects primary activity,
+adopts secondary posture
+end note
+ps -> ss: I AM SECONDARY
+ps->ss:(...)
+ss->ps
+@enduml

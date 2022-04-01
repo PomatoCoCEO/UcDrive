@@ -1,0 +1,22 @@
+@startuml download
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+'skinparam ParticipantBackgroundColor #00ffff
+'skinparam ParticipantBorderColor #0000ff these are comments, started with '
+client -> server : DOWNLOAD <FILE_NAME>
+rnote over server
+Open socket to send
+end note
+server -> client : FILE EXISTS
+rnote over client
+Open socket to receive
+end note
+client ->server : PORT <PORT_NO> 
+server -> client : FILE <NAME> SIZE <BYTE_SIZE> BLOCKS <NO_BLOCKS> 
+rnote over server
+Transfer file
+end note
+server -> client : BLOCK 1
+server -> client: BLOCK 2
+server -> client: ...
+@enduml

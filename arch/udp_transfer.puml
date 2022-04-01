@@ -1,0 +1,23 @@
+@startuml
+participant "Primary Server" as ps
+participant "Secondary Server" as ss
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+ps ->ss: FILE <NAME> SIZE <BYTE_SIZE> BLOCKS <NO_BLOCKS> 
+ss -> ps : PORT <PORT_NO>
+ps->ss: OK
+ps->ss: BLOCK 1
+ps->ss: BLOCK 2
+ps->ss: ... (until block 10)
+rnote over ss
+compute cumulative md5
+end note
+ss -> ps: MD5 <CALCULATED MD5>
+rnote over ps
+compute cumulative md5
+and compare
+end note
+ps->ss: OK
+ps->ss: (repeat from BLOCK 1 until end of transfer)
+
+@enduml
