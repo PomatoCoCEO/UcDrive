@@ -146,8 +146,30 @@ public class CommandHandler {
         String[] ls = line.split(" ", 2); // ! check if double spaces
         String token = Client.getToken();
         Request req;
+        String dir = "";
+
         if (ls.length > 1) {
-            req = new Request("LS\n" + ls[1], token); // idempotent
+
+            dir = ls[1];
+            String serverDir = Client.getServerDir();
+            // System.out.println("Server dir: " + serverDir);
+            String[] paths = dir.split("/");
+
+            for (String p : paths) {
+                if (p.equals("..")) {
+                    int lastSlash = serverDir.lastIndexOf("/");
+                    if (lastSlash == -1) {
+                        System.out.println("Invalid dir");
+                        return;
+                    }
+                    serverDir = serverDir.substring(0, lastSlash);
+
+                } else {
+                    serverDir = serverDir + "/" + p;
+                }
+            }
+
+            req = new Request("LS\n" + serverDir, token); // idempotent
         } else {
             req = new Request("LS", token); // idempotent
         }
@@ -175,7 +197,7 @@ public class CommandHandler {
         if (sp.length >= 2)
             dir = sp[1];
         String serverDir = Client.getServerDir();
-        System.out.println("Server dir: " + serverDir);
+        // System.out.println("Server dir: " + serverDir);
         String[] paths = dir.split("/");
 
         for (String p : paths) {
