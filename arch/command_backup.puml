@@ -1,0 +1,20 @@
+@startuml command_backup
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+participant "Client" as c
+participant "Primary Server" as ps
+participant "Secondary Server" as ss
+
+c->ps: <command> (SCD or CH-PASS)
+rnote over ps
+open new socket
+for command backup
+end note
+ps->ss: <command> <USERNAME> <NEW_STATE>
+rnote over ss
+receive in dedicated port
+apply changes
+end note
+ss->ps: OK
+
+@enduml

@@ -1,0 +1,55 @@
+@startuml architecture
+'default
+left to right direction
+skinparam ControlBackgroundColor #00ffff
+skinparam ControlBorderColor #0000ff
+skinparam ArrowColor #ff0000
+skinparam ControlFontName Consolas
+skinparam QueueBackgroundColor #00ffff
+skinparam QueueBorderColor #0000ff
+skinparam FileBackgroundColor #88bbff
+component client as "Client"{
+    control "TCP File\nSender/Receiver" AS tcp_client_file_sender_receiver
+    control "Command\nHandler" AS command_handler
+    queue "Backup Command Queue" as backup_command_queue
+}
+
+component primary_server as "Primary Server" {
+    control "Command\nReceivers" AS command_receivers
+    control "TCP File\nSender/Receiver" AS tcp_server_file_sender_receiver
+    control "Failover\nCommand\nSender" AS failover_command_sender
+    control "UDP File\nSender" AS udp_file_sender
+    control "Primary\nHeartbeat" AS primary_heartbeat
+    queue "UDP File Transfer Queue" as udp_queue
+    queue "TCP File Transfer Queue" as tcp_queue
+    file "File System" as pfs
+}
+
+component secondary_server as "Secondary Server" {
+    control "Secondary\nHeartbeat" AS secondary_heartbeat
+    control "Failover\nCommand\nExecutor" AS failover_command_executor
+    control "UDP File\nReceivers" AS udp_file_receivers
+    file "File System" as sfs
+}
+
+
+
+primary_heartbeat <-> secondary_heartbeat : Ping exchange
+command_handler <--> command_receivers: Command\nchannel
+backup_command_queue --> command_receivers: Backup Command channel
+command_handler -> backup_command_queue: Commands
+command_receivers -right-> udp_queue: Command
+command_receivers -> pfs: Persist state change
+udp_queue -right-> failover_command_sender: Command
+command_receivers --> tcp_queue: File Transfer\nCommands
+tcp_queue --> tcp_server_file_sender_receiver: File Transfer\nCommands
+tcp_server_file_sender_receiver --> udp_file_sender: Failover\nfile transfer
+tcp_server_file_sender_receiver <--> pfs: Save/Retrieve Files
+udp_file_sender --> udp_file_receivers: Uploaded File
+failover_command_sender -right-> failover_command_executor: State-changing\ncommands
+failover_command_executor -> sfs: Persist state change
+udp_file_receivers -> sfs: Save Files
+tcp_client_file_sender_receiver <-right-> tcp_server_file_sender_receiver: Data channel
+
+
+@enduml

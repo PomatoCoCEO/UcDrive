@@ -1,0 +1,11 @@
+@startuml login
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+'skinparam ParticipantBackgroundColor #00ffff
+'skinparam ParticipantBorderColor #0000ff these are comments, started with '
+client -> server : LOGIN USER <USERNAME> PASSWORD <PASSWORD>
+rnote over server
+opens dedicated connection
+end note
+server -> client: OK <TOKEN>
+@enduml
