@@ -121,6 +121,7 @@ public class UDPTransfer extends Thread {
             // if(fileName.indexOf("\\")!=-1) fileName =
             // absolutePath.substring(absolutePath.lastIndexOf("\\")+1); // for windows
             DatagramSocket ds = new DatagramSocket();
+            ds.setSoTimeout(10000);
             String fileInfo = "FILE " + filePath + "\nSIZE " + byteSize + "\nBLOCKS " + noBlocks + "\nPORT "
                     + destinationPort;
             sendString(ds, fileInfo);
@@ -181,6 +182,7 @@ public class UDPTransfer extends Thread {
             System.out.println("Udp transfer complete");
             dis.close();
         } catch (IOException io) {
+            System.out.println("Could not send to secondary Server");
             io.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
             // TODO Auto-generated catch block

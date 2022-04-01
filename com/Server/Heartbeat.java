@@ -16,8 +16,10 @@ public class Heartbeat extends Thread {
 
     /**
      * Class constructor
+     * 
      * @param ds the origin socket, where the heartbeat is sent from
-     * @param cs the primary server configuration, with the ip and port for communication
+     * @param cs the primary server configuration, with the ip and port for
+     *           communication
      */
     public Heartbeat(DatagramSocket ds, ConfigServer cs) {
         this.cs = cs;
@@ -33,7 +35,7 @@ public class Heartbeat extends Thread {
                     cs.getUdpHeartbeatPort());
             // System.out.println("Secondary server heartbeat");
             // System.out.println("Sending datagram to port "+request.getPort()+
-            //         ", address "+request.getAddress()+", content "+request.getData());
+            // ", address "+request.getAddress()+", content "+request.getData());
             // System.out.println("Original port is "+ds.getLocalPort());
             System.out.print("s");
             try {
@@ -42,13 +44,15 @@ public class Heartbeat extends Thread {
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                 ds.receive(reply);
                 noFailedHeartbeats = 0;
-                /*if ((new String(reply.getData())).equals("I AM PRIMARY")) {
-                    noFailedHeartbeats = 0;
-                }*/
+                /*
+                 * if ((new String(reply.getData())).equals("I AM PRIMARY")) {
+                 * noFailedHeartbeats = 0;
+                 * }
+                 */
                 Thread.sleep(HEARTBEAT_SLEEP_MILLISECONDS);
             } catch (SocketTimeoutException ste) {
                 noFailedHeartbeats++;
-                System.out.println("Heartbeats failed: "+noFailedHeartbeats);
+                System.out.println("Heartbeats failed: " + noFailedHeartbeats);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -70,15 +74,17 @@ public class Heartbeat extends Thread {
         int noFailedHeartbeats = 0;
 
         while (!secondaryActivity || noFailedHeartbeats < ALLOWED_HEARTBEAT_FAILURES) {
+
             DatagramPacket request = new DatagramPacket(message.getBytes(), message.length(), cs.getServerAddress(),
                     cs.getUdpHeartbeatPort());
             try {
-                //System.out.println("Primary heartbeat sending datagram to port "+request.getPort()+", address "+request.getAddress()+", content "+request.getData());
+
                 System.out.print("p");
                 ds.send(request);
                 byte[] buffer = new byte[1000]; // ! this is a magic number
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                 ds.receive(reply);
+
                 noFailedHeartbeats = 0;
                 if ((new String(reply.getData())).equals("I AM PRIMARY") && !isSecondary && !secondaryActivity) {
                     message = "I AM SECONDARY";
@@ -90,8 +96,10 @@ public class Heartbeat extends Thread {
             } catch (SocketTimeoutException ste) {
                 if (isSecondary)
                     System.out.println("Primary server not restored yet");
-                /*else
-                    System.out.println("Secondary server down");*/
+                /*
+                 * else
+                 * System.out.println("Secondary server down");
+                 */
                 noFailedHeartbeats++;
             } catch (IOException e) {
                 // TODO Auto-generated catch block
@@ -115,6 +123,7 @@ public class Heartbeat extends Thread {
         this.ds = ds;
     }
 
-    public void run() {}
+    public void run() {
+    }
 
 }

@@ -97,10 +97,11 @@ public class ClientUpload extends Thread {
                 byte[] toSend = new byte[BLOCK_BYTE_SIZE];
                 for (int i = 0; i < noBlocks; i++) {
                     int bytesToSend = dis.read(toSend);
-                    System.out.println("bytes to send: " + bytesToSend);
+                    // System.out.println("bytes to send: " + bytesToSend);
                     FileChunk fc = new FileChunk(Arrays.copyOf(toSend, bytesToSend));
                     oos.writeObject(fc);
                     oos.flush();
+
                 }
                 byte[] digest = md.digest();
 
@@ -119,9 +120,9 @@ public class ClientUpload extends Thread {
                 System.out.println("pos readobj: " + rep.getMessage());
 
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
-            System.out.println("MD5 match");
+            System.out.println("Upload completed");
         } catch (SocketTimeoutException | SocketException e) {
-            String command = "UPLOAD " + fileName;
+            String command = "upload " + fileName;
             System.out.println("Adding command to the pool: " + command);
             Client.getCommandQueue().add(command);
             throw e;

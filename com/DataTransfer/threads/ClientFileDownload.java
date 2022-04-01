@@ -130,15 +130,18 @@ public class ClientFileDownload extends Thread {
                     oos.flush();
                 } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
 
+                System.out.println(fileName + " : transfer complete");
+
             } catch (IOException e) {
-                String command = "DOWNLOAD " + fileName;
+                String fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/') + 1);
+                if (fileName.indexOf('\\') != -1)
+                    fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('\\') + 1);
+                String command = "download " + fileNameWithoutDirectory;
                 System.out.println("Adding command to the pool: " + command);
                 Client.getCommandQueue().add(command);
                 System.out.println("An error occurred:");
                 e.printStackTrace();
             }
-
-            System.out.println(fileName + " : transfer complete");
 
             ois.close();
             oos.close();

@@ -95,30 +95,28 @@ public class Client {
 
         try {
             Scanner commandReader = new Scanner(System.in);
+            String command = "";
             try {
 
                 System.out.println("Trying to connect to " + config.getPrimaryServerName() +
                         " with port " + config.getPrimaryServerPort());
                 s = new Socket(config.getPrimaryServerName(), config.getPrimaryServerPort());
+                s.setSoTimeout(CLIENT_SOCKET_TIMEOUT_MILLISECONDS);
+                clientConnection = new ClientConnection(s, config);
+                System.out.println("socket created");
+
+                System.out.println("SOCKET=" + s);
+
+                InetAddress add = InetAddress.getByName(config.getPrimaryServerName());
+
+                commandHandler = new CommandHandler(clientConnection, s, add, config.getPrimaryServerPort(), config);
+                System.out.println("here");
+
+                commandHandler.login(commandReader);
             } catch (SocketException e) {
                 System.out.println("Switch 2: " + e.getMessage());
                 commandHandler = switchServer(commandHandler, clientConnection, commandReader);
             }
-            System.out.println("socket created");
-
-            s.setSoTimeout(CLIENT_SOCKET_TIMEOUT_MILLISECONDS);
-            clientConnection = new ClientConnection(s, config);
-
-            System.out.println("SOCKET=" + s);
-
-            String command = "";
-
-            InetAddress add = InetAddress.getByName(config.getPrimaryServerName());
-
-            commandHandler = new CommandHandler(clientConnection, s, add, config.getPrimaryServerPort(), config);
-            System.out.println("here");
-
-            commandHandler.login(commandReader);
 
             System.out.println("Enter command: (help for more info)");
             while (true) {

@@ -41,9 +41,13 @@ public class PrimaryServer extends Server {
                 DatagramPacket reply = new DatagramPacket(buffer, buffer.length);
                 try {
                     ds.receive(reply); // receives in the specified socket
-                    if ((new String(reply.getData())).equals("I AM PRIMARY")) {
+
+                    String rr = (new String(reply.getData())).trim();
+                    if (rr.equals("I AM PRIMARY")) {
+
                         // act like a secondary server
                         isCurrentlyPrimary = false;
+                        System.out.println("Sou secundario");
                         new SecondaryHeartbeat(ds, secondaryServerConfig);
                         // upd file update
                         break;
@@ -62,6 +66,7 @@ public class PrimaryServer extends Server {
                 } catch (IOException io) {
                     System.out.println("Problems: " + io.getMessage());
                     io.printStackTrace();
+                    break;
                 }
             }
 
@@ -71,6 +76,37 @@ public class PrimaryServer extends Server {
                 phb.join();
                 // acceptTcp();
             } else {
+
+                try {
+
+                    ds.setSoTimeout(SOCKET_TIMEOUT_MILLISECONDS);
+                    SecondaryHeartbeat sh = new SecondaryHeartbeat(ds, secondaryServerConfig);
+                    UDPAccept udpAccept = new UDPAccept(this); // we need to use our config
+                    UDPCommandReceiver ucr = new UDPCommandReceiver(this);
+                    // here we should make another thread to accept the dup connections
+                    sh.join();
+                    System.out.println("Pserver Secondary heartbeat joined.");
+                    udpAccept.interrupt();
+                    ucr.interrupt();
+                    // after the server knows it will replace the primary server
+                    System.out.println("UDP transfer thread interrupted.");
+                    // it should kill the file receipt thread
+
+                    // ! udpAccept won't die, so we need to fix this
+                    System.out.println("UDP transfer thread over.");
+                    PrimaryHeartbeat ph = new PrimaryHeartbeat(ds, secondaryServerConfig, true);
+                    bePrimary();
+                    ph.join();
+                    // ! we might need to check the value of isSecondary in this call
+                    // ds.close();
+                } catch (SocketException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
                 UDPAccept ua = new UDPAccept(this);
                 ua.join();
             }
