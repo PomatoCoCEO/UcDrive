@@ -1,6 +1,9 @@
 @startuml architecture
 'default
-left to right direction
+'left to right direction
+skinparam DefaultTextAlignment CENTER
+skinparam DefaultFontColor #ffffff
+skinparam ArrowColor #ffbb00
 skinparam ControlBackgroundColor #00ffff
 skinparam ControlBorderColor #0000ff
 skinparam ArrowColor #ff0000
@@ -38,18 +41,18 @@ primary_heartbeat <-> secondary_heartbeat : Ping exchange
 command_handler <--> command_receivers: Command\nchannel
 backup_command_queue --> command_receivers: Backup Command channel
 command_handler -> backup_command_queue: Commands
-command_receivers -right-> udp_queue: Command
+command_receivers --> udp_queue: Command
 command_receivers -> pfs: Persist state change
-udp_queue -right-> failover_command_sender: Command
+udp_queue --> failover_command_sender: Command
 command_receivers --> tcp_queue: File Transfer\nCommands
 tcp_queue --> tcp_server_file_sender_receiver: File Transfer\nCommands
 tcp_server_file_sender_receiver --> udp_file_sender: Failover\nfile transfer
 tcp_server_file_sender_receiver <--> pfs: Save/Retrieve Files
-udp_file_sender --> udp_file_receivers: Uploaded File
-failover_command_sender -right-> failover_command_executor: State-changing\ncommands
-failover_command_executor -> sfs: Persist state change
+udp_file_sender -down-> udp_file_receivers: Uploaded File
+failover_command_sender --> failover_command_executor: State-changing\ncommands
+failover_command_executor --> sfs: Persist state change
 udp_file_receivers -> sfs: Save Files
-tcp_client_file_sender_receiver <-right-> tcp_server_file_sender_receiver: Data channel
+tcp_client_file_sender_receiver <--> tcp_server_file_sender_receiver: Data channel
 
 
 @enduml

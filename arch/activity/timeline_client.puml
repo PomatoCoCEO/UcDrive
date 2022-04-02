@@ -1,9 +1,9 @@
 @startuml client_timeline
 skinparam DefaultTextAlignment CENTER
-skinparam ActivityBackgroundColor #00ffff
-skinparam ArrowColor #ff0000
+skinparam ActivityBackgroundColor #060662a8
+skinparam DefaultFontColor #ffffff
+skinparam ArrowColor #ffbb00
 skinparam ActivityBorderColor #0000ff
-skinparam DefaultFontName Garamond
 :Client;
 split
 :main thread;
