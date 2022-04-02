@@ -95,7 +95,7 @@ public class CommandHandler {
                         Client.setClientDir(System.getProperty("user.dir") + "/com/Client/Data");
                         return;
                     case "Unauthorized":
-                        System.out.println("Wrong username or password");
+                        System.out.println("Wrong username, password or already in session");
                         break;
                     default:
                         System.out.println("Login failed");

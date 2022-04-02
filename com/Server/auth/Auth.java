@@ -114,7 +114,8 @@ public class Auth {
 
     public User authenticate(String username, String password) throws Exception {
         User found = users.ceiling(new User(username, "", "", ""));
-        if (!found.getUsername().equals(username) || !found.getPasswordHash().equals(password)) {
+        if (!found.getUsername().equals(username) || !found.getPasswordHash().equals(password)
+                || !found.getToken().equals("")) {
             throw new Exception("Authentication failed: user " + found);
         }
 

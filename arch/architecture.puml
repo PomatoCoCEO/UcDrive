@@ -1,9 +1,7 @@
 @startuml architecture
 'default
 'left to right direction
-skinparam DefaultTextAlignment CENTER
-skinparam DefaultFontColor #ffffff
-skinparam ArrowColor #ffbb00
+
 skinparam ControlBackgroundColor #00ffff
 skinparam ControlBorderColor #0000ff
 skinparam ArrowColor #ff0000

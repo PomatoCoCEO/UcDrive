@@ -1,6 +1,19 @@
 @startuml command_backup
 skinparam sequenceMessageAlign CENTER
 skinparam NoteTextAlignment CENTER
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+skinparam DefaultTextAlignment CENTER
+skinparam ArrowColor #ffbb00
+skinparam ArrowFontColor #000000
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+skinparam NoteBackgroundColor #060662a8
+skinparam NoteBorderColor #0000ff
+skinparam ParticipantBackgroundColor #060662a8
+skinparam ParticipantBorderColor #0000ff
+skinparam PathHoverColor #ffbb00
+skinparam SequenceLifeLineBorderColor #ffbb00
 participant "Client" as c
 participant "Primary Server" as ps
 participant "Secondary Server" as ss

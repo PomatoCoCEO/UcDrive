@@ -2,12 +2,13 @@
 skinparam sequenceMessageAlign CENTER
 skinparam NoteTextAlignment CENTER
 skinparam DefaultTextAlignment CENTER
-skinparam DefaultFontColor #ffffff
 skinparam ArrowColor #ffbb00
 skinparam sequenceMessageAlign CENTER
 skinparam NoteTextAlignment CENTER
 skinparam NoteBackgroundColor #060662a8
 skinparam NoteBorderColor #0000ff
+skinparam NoteFontColor white
+skinparam ParticipantFontColor white
 skinparam ParticipantBackgroundColor #060662a8
 skinparam ParticipantBorderColor #0000ff
 skinparam PathHoverColor #ffbb00

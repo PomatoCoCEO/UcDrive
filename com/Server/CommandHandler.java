@@ -71,6 +71,7 @@ public class CommandHandler {
                 handleUpload();
                 break;
             case "ABORT":
+                this.serverConnection.getUser().setToken("");
                 this.serverConnection.close();
                 break;
             // case EXIT: close socket and all

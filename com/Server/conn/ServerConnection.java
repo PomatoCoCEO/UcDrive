@@ -69,6 +69,8 @@ public class ServerConnection extends Thread {
                 }
                 // and send response
             } catch (EOFException e) {
+                this.getUser().setToken("");
+
                 System.out.println("EOF:" + e);
                 try {
                     this.socket.close();
@@ -77,12 +79,17 @@ public class ServerConnection extends Thread {
                 }
                 return;
             } catch (IOException e) {
+                this.getUser().setToken("");
+
                 e.printStackTrace();
                 return;
             } catch (ClassNotFoundException cnf) {
+                this.getUser().setToken("");
+
                 cnf.printStackTrace();
                 return;
             } catch (AuthorizationException ae) {
+                this.getUser().setToken("");
                 ae.printStackTrace();
             }
 

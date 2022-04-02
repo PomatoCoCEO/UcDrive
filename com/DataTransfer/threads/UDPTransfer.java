@@ -145,9 +145,9 @@ public class UDPTransfer extends Thread {
             boolean newInfo = true;
 
             while (blocksSent < noBlocks) {
-                System.out.println("Blocks sent so far: " + blocksSent);
+                // System.out.println("Blocks sent so far: " + blocksSent);
                 for (int i = 0; i < Math.min(noBlocks - blocksSent, NO_BLOCKS_TRANSFER); i++) {
-                    System.out.println("Sending Block");
+                    // System.out.println("Sending Block");
                     if (newInfo) {
                         lengths[i] = dis.read(cache[i]);
                     }
@@ -163,14 +163,14 @@ public class UDPTransfer extends Thread {
                      * }
                      */
                 }
-                System.out.println("Sent block tranch");
+                // System.out.println("Sent block tranch");
                 String md5Secondary = new String(receiveBytes(ds, (int) BLOCK_BYTE_SIZE)).trim();
                 String md5Result = calculateMD5(md);
-                System.out.println("MD5s : " + md5Secondary + " and " + md5Result);
+                // System.out.println("MD5s : " + md5Secondary + " and " + md5Result);
                 if (!md5Result.equals(md5Secondary)) {
                     newInfo = false;
                     sendString(ds, "ERROR MD5");
-                    System.out.println("DIFFERENT MD5 " + md5Secondary + " " + md5Result);
+                    // System.out.println("DIFFERENT MD5 " + md5Secondary + " " + md5Result);
                 } else {
                     // System.out.println("Sending ok...");
                     newInfo = true;
@@ -215,12 +215,12 @@ public class UDPTransfer extends Thread {
             MessageDigest md = MessageDigest.getInstance("MD5"), clone;
             byte[][] cache = new byte[NO_BLOCKS_TRANSFER][BLOCK_BYTE_SIZE];
             int[] lengths = new int[NO_BLOCKS_TRANSFER];
-            System.out.println("Blocks read: " + blocksRead);
-            System.out.println("noBlocks: " + noBlocks);
+            // System.out.println("Blocks read: " + blocksRead);
+            // System.out.println("noBlocks: " + noBlocks);
             while (blocksRead < noBlocks) {
                 clone = (MessageDigest) md.clone();
                 for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
-                    System.out.println("Trying to receive block " + i);
+                    // System.out.println("Trying to receive block " + i);
                     // int aid =
                     DatagramPacket reply = new DatagramPacket(cache[i], cache[i].length);
                     try {
@@ -236,11 +236,11 @@ public class UDPTransfer extends Thread {
                 }
                 String md5 = calculateMD5(md);
                 sendString(ds, md5);
-                System.out.println("Waiting for ok...");
+                // System.out.println("Waiting for ok...");
                 String ans = new String(receiveBytes(ds, BLOCK_BYTE_SIZE)).trim();
-                System.out.println("ans = " + ans);
+                // System.out.println("ans = " + ans);
                 if (ans.equals("OK")) {
-                    System.out.println("Ans equals ok");
+                    // System.out.println("Ans equals ok");
                     for (int i = 0; i < Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER); i++) {
                         if (lengths[i] < BLOCK_BYTE_SIZE) {
                             byte[] toCopy = Arrays.copyOf(cache[i], lengths[i]);
