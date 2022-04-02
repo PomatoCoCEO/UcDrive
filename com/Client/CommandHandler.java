@@ -152,7 +152,7 @@ public class CommandHandler {
 
             dir = ls[1];
             String serverDir = Client.getServerDir();
-            // System.out.println("Server dir: " + serverDir);
+
             String[] paths = dir.split("/");
 
             for (String p : paths) {
@@ -169,7 +169,7 @@ public class CommandHandler {
                 }
             }
 
-            req = new Request("LS\n" + serverDir, token); // idempotent
+            req = new Request("LS\n" + dir, token); // idempotent
         } else {
             req = new Request("LS", token); // idempotent
         }
@@ -310,6 +310,26 @@ public class CommandHandler {
         if (sp.length < 2) {
             System.out.println("Command format : <download> <file name>");
             return;
+        } else {
+
+            String dir = sp[1];
+            String serverDir = Client.getServerDir();
+
+            String[] paths = dir.split("/");
+
+            for (String p : paths) {
+                if (p.equals("..")) {
+                    int lastSlash = serverDir.lastIndexOf("/");
+                    if (lastSlash == -1) {
+                        System.out.println("Invalid dir");
+                        return;
+                    }
+                    serverDir = serverDir.substring(0, lastSlash);
+
+                } else {
+                    serverDir = serverDir + "/" + p;
+                }
+            }
         }
         Request req = new Request("DOWNLOAD\n" + sp[1], Client.getToken());
         clientConnection.sendRequest(req);
@@ -397,6 +417,8 @@ public class CommandHandler {
             config.setSecondaryServerName(sc.next());
             System.out.println("Enter new secondary server port: ");
             config.setSecondaryServerPort(sc.nextInt());
+
+            config.saveInfo();
 
             // tryToReconnect();
             // ! check if primary is down

@@ -91,7 +91,6 @@ public class Client {
         CommandHandler commandHandler = new CommandHandler();
         ClientConnection clientConnection = new ClientConnection();
         Socket s = null;
-        System.out.println("null init done");
 
         try {
             Scanner commandReader = new Scanner(System.in);
@@ -103,14 +102,12 @@ public class Client {
                 s = new Socket(config.getPrimaryServerName(), config.getPrimaryServerPort());
                 s.setSoTimeout(CLIENT_SOCKET_TIMEOUT_MILLISECONDS);
                 clientConnection = new ClientConnection(s, config);
-                System.out.println("socket created");
 
                 System.out.println("SOCKET=" + s);
 
                 InetAddress add = InetAddress.getByName(config.getPrimaryServerName());
 
                 commandHandler = new CommandHandler(clientConnection, s, add, config.getPrimaryServerPort(), config);
-                System.out.println("here");
 
                 commandHandler.login(commandReader);
             } catch (SocketException e) {
@@ -118,6 +115,10 @@ public class Client {
                 commandHandler = switchServer(commandHandler, clientConnection, commandReader);
             }
 
+            if (commandHandler.getSocket() == null) {
+                System.out.println("Exiting client");
+                return;
+            }
             System.out.println("Enter command: (help for more info)");
             while (true) {
                 try {

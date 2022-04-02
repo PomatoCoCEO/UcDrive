@@ -12,6 +12,19 @@ public class ConfigClient {
     private String primaryServerName, secondaryServerName;
     private int primaryServerPort, secondaryServerPort;
 
+    public void saveInfo() {
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("com/Client/config/config"));
+
+            writer.write(primaryServerName + " " + primaryServerPort + "\n" + secondaryServerName + " "
+                    + secondaryServerPort + "\n");
+            writer.close();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
     public void configServerInfo() {
 
         Scanner sc = new Scanner(System.in);
@@ -39,7 +52,7 @@ public class ConfigClient {
         }
 
         // BufferedReader br = new BufferedReader(fr);
-        //! verify ip syntax
+        // ! verify ip syntax
         System.out.println("Enter new primary server ip: ");
         setPrimaryServerName(sc.next());
         System.out.println("Enter new primary server port: ");
@@ -49,19 +62,7 @@ public class ConfigClient {
         System.out.println("Enter new secondary server port: ");
         setSecondaryServerPort(sc.nextInt());
 
-        // Creating a new file named `config` in the same directory as the program.
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("config"));
-			writer.write(primaryServerName+ " "+ primaryServerPort + "\n" + secondaryServerName+ " "+ secondaryServerPort + "\n");
-            writer.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-        
-
-        // ! write new info to file
+        this.saveInfo();
 
     }
 
