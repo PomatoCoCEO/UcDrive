@@ -1,0 +1,22 @@
+@startuml secondary_server_timeline
+skinparam DefaultTextAlignment CENTER
+skinparam ActivityBackgroundColor #00ffff
+skinparam ArrowColor #ff0000
+skinparam ActivityBorderColor #0000ff
+:SecondaryServer;
+split
+:main thread;
+detach
+split again
+:SecondaryHeartbeat;
+detach
+split again
+:UDPAccept;
+:UDPTransfer;
+detach
+split again
+:UDPCommandReceiver;
+:UDPCommandHandler;
+detach
+
+@enduml

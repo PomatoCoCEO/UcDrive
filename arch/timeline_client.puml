@@ -1,0 +1,19 @@
+@startuml client_timeline
+skinparam DefaultTextAlignment CENTER
+skinparam ActivityBackgroundColor #00ffff
+skinparam ArrowColor #ff0000
+skinparam ActivityBorderColor #0000ff
+skinparam DefaultFontName Garamond
+:Client;
+split
+:main thread;
+detach
+split again
+:ClientFileDownload;
+detach
+split again
+:ClientUpload;
+detach
+
+
+@enduml
