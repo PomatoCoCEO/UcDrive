@@ -83,7 +83,6 @@ public class ClientUpload extends Thread {
 
             Reply rep = new Reply("FILE\n" + fileName + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
                     ResponseStatus.OK.getStatus());
-            System.out.println("Sending reply with file metadata: " + rep);
             oos.writeObject(rep);
             oos.flush();
 

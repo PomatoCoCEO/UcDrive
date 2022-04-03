@@ -121,7 +121,7 @@ public class Client {
                     if (commandHandler.handleCommand(command, commandReader)) // true when command == exit
                         break;
 
-                } catch (SocketTimeoutException | SocketException e) {
+                } catch (SocketTimeoutException | SocketException | EOFException e) {
                     commandQueue.add(command);
                     commandHandler = switchServer(commandHandler, clientConnection, commandReader);
                     if (commandHandler.getSocket() == null) {

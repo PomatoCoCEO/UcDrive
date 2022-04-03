@@ -2,10 +2,8 @@
   <artifact type="jar" name="PrimaryServer">
     <output-path>$PROJECT_DIR$/out/artifacts/PrimaryServer</output-path>
     <root id="archive" name="PrimaryServer.jar">
-      <element id="directory" name="META-INF">
-        <element id="file-copy" path="$PROJECT_DIR$/com/Server/META-INF/MANIFEST.MF" />
-      </element>
       <element id="module-output" name="UcDrive" />
+      <element id="artifact" artifact-name="Client" />
     </root>
   </artifact>
 </component>

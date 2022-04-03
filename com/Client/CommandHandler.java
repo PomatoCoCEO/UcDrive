@@ -1,10 +1,6 @@
 package com.Client;
 
-import java.io.Console;
-import java.io.File;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -70,7 +66,7 @@ public class CommandHandler {
 
     }
 
-    public void login(Scanner commandReader) throws SocketTimeoutException, SocketException {
+    public void login(Scanner commandReader) throws SocketTimeoutException, SocketException, EOFException {
 
         while (true) {
             try {
@@ -102,14 +98,14 @@ public class CommandHandler {
                     default:
                         System.out.println("Login failed");
                 }
-            } catch (SocketTimeoutException | SocketException e) {
+            } catch (SocketTimeoutException | SocketException | EOFException e) {
                 throw e;
             }
 
         }
     }
 
-    public void changePassword(Scanner commandReader) throws SocketTimeoutException, SocketException {
+    public void changePassword(Scanner commandReader) throws SocketTimeoutException, SocketException, EOFException {
         Console cons = System.console();
         boolean first = true;
         String confirmPass, newPass;
@@ -141,7 +137,7 @@ public class CommandHandler {
         login(commandReader);
     }
 
-    public void serverLs(String line) throws SocketTimeoutException, SocketException {
+    public void serverLs(String line) throws EOFException, SocketTimeoutException, SocketException {
         String[] ls = line.split(" ", 2); // ! check if double spaces
         String token = Client.getToken();
         Request req;
@@ -188,7 +184,7 @@ public class CommandHandler {
         }
     }
 
-    public void changeServerWorkingDirectory(String command) throws SocketTimeoutException, SocketException {
+    public void changeServerWorkingDirectory(String command) throws SocketTimeoutException, SocketException, EOFException {
 
         String dir = "";
         String[] sp = command.split(" ", 2);
@@ -304,7 +300,7 @@ public class CommandHandler {
         }
     }
 
-    public void downloadFile(String command) throws SocketTimeoutException, SocketException {
+    public void downloadFile(String command) throws SocketTimeoutException, SocketException, EOFException {
         String[] sp = command.split(" ", 2);
         if (sp.length < 2) {
             System.out.println("Command format : <download> <file name>");
@@ -442,7 +438,7 @@ public class CommandHandler {
     }
 
     public boolean handleCommand(String line, Scanner commandReader)
-            throws SocketTimeoutException, SocketException {
+            throws SocketTimeoutException, SocketException, EOFException {
         String[] commands = line.split(" ", 2);
         String command = commands[0];
         switch (command) {

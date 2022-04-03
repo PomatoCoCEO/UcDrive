@@ -1,0 +1,37 @@
+@startuml primary_server_timeline
+
+skinparam DefaultTextAlignment CENTER
+skinparam DefaultFontColor #ffffff
+skinparam ArrowColor #ffbb00
+skinparam ActivityBackgroundColor #060662a8
+skinparam ActivityBorderColor #0000ff
+:PrimaryServer;
+split
+:main thread;
+detach
+split again
+
+:PrimaryHeartbeat;
+
+detach
+split again
+:TCPAccept;
+:ServerConnection;
+detach
+split again
+:FTUploadCreator;
+:ServerUpload;
+detach
+split again
+:FTDownloadCreator;
+:ServerDownload; 
+detach
+split again
+:FTUdpCreator;
+:UDPTransfer; 
+detach
+split again
+:UDPCommandSender;
+detach
+
+@enduml

@@ -1,0 +1,44 @@
+@startuml
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+skinparam DefaultTextAlignment CENTER
+skinparam ArrowColor #ffbb00
+skinparam sequenceMessageAlign CENTER
+skinparam NoteTextAlignment CENTER
+skinparam NoteBackgroundColor #060662a8
+skinparam NoteBorderColor #0000ff
+skinparam NoteFontColor white
+skinparam ParticipantFontColor white
+skinparam ParticipantBackgroundColor #060662a8
+skinparam ParticipantBorderColor #0000ff
+skinparam PathHoverColor #ffbb00
+skinparam SequenceLifeLineBorderColor #ffbb00
+participant "Primary Server" as ps
+participant "Secondary Server" as ss
+ps ->ss: I AM PRIMARY
+ss -> ps: I AM SECONDARY
+ps -> ss: (continue until primary server fails)
+ss-> ps
+rnote over ps
+FAILURE
+end note
+rnote over ss
+missing heartbeats,
+switch to primary
+end note
+ss -> ps: I AM PRIMARY
+ss -> ps: I AM PRIMARY (...)
+ss -> ps:
+RNOTE OVER ps
+server
+restored
+end note
+ss -> ps: I AM PRIMARY
+RNOTE OVER ps
+detects primary activity,
+adopts secondary posture
+end note
+ps -> ss: I AM SECONDARY
+ps->ss:(...)
+ss->ps
+@enduml

@@ -1,5 +1,6 @@
 package com.Client.conn;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -62,11 +63,11 @@ public class ClientConnection {
         }
     }
 
-    public Reply getReply() throws SocketTimeoutException, SocketException {
+    public Reply getReply() throws SocketTimeoutException, SocketException, EOFException {
         Reply reply = new Reply("", "");
         try {
             reply = (Reply) in.readObject();
-        } catch(SocketTimeoutException | SocketException e) {
+        } catch(SocketTimeoutException | SocketException | EOFException e) {
             throw e;
         } catch (ClassNotFoundException | IOException e) {
             // TODO Auto-generated catch block
