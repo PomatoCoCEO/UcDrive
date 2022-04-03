@@ -8,6 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +25,7 @@ import com.Server.auth.Auth.Operation;
 import com.Server.config.ConfigServer;
 import com.Server.conn.ServerConnection;
 import com.Server.except.AuthorizationException;
+import com.Server.udp.UDPCommandSender;
 import com.enums.ResponseStatus;
 import com.DataTransfer.FileTransfer;
 
@@ -37,7 +39,7 @@ public class CommandHandler {
         this.serverConnection = serverConnection;
     }
 
-    public void verifyRequest(Request request) throws AuthorizationException {
+    public void verifyRequest(Request request) throws AuthorizationException, SocketException{
         String comm = request.getMessage().split("\n")[0];
         if (!comm.equals("LOGIN")) {
             if (!request.getToken().equals(serverConnection.getUser().getToken())) {
@@ -48,7 +50,7 @@ public class CommandHandler {
         }
     }
 
-    public void handleRequest(Request request) throws AuthorizationException {
+    public void handleRequest(Request request) throws AuthorizationException, SocketException {
         verifyRequest(request);
         String[] sp = request.getMessage().split("\n");
         switch (sp[0]) {
@@ -140,7 +142,7 @@ public class CommandHandler {
         }
     }
 
-    public void login(Request request) {
+    public void login(Request request) throws SocketException{
         Reply reply;
         boolean authenticated = false;
         boolean first = true;
@@ -166,7 +168,10 @@ public class CommandHandler {
                         ResponseStatus.OK.getStatus());
                 // sends a token (to be implemented) and the last working directory
                 serverConnection.sendReply(reply);
-            } catch (Exception e) {
+            } catch(SocketException se) {
+                throw se;
+            } 
+            catch (Exception e) {
                 System.err.println("No authentication was possible");
                 reply = new Reply("Login unsuccessful", "Unauthorized");
                 serverConnection.sendReply(reply);
@@ -175,7 +180,7 @@ public class CommandHandler {
         }
     }
 
-    private void changePassword(Request request) {
+    private void changePassword(Request request) throws SocketException {
         String[] sp = request.getMessage().split("\n");
         System.out.println("Split");
         String newPassword = sp[1];
@@ -190,7 +195,7 @@ public class CommandHandler {
                 .execute(new UDPCommandSender(serverConnection.getServer(), failOverChangePassword));
     }
 
-    private void handleLs(Request request) {
+    private void handleLs(Request request) throws SocketException {
         String[] sp = request.getMessage().split("\n", 2);
         String relativePath = "";
         // if it has no argument then we just get the user's last directory
@@ -224,6 +229,7 @@ public class CommandHandler {
         } catch (IOException io) {
             io.printStackTrace();
         } finally {
+
             serverConnection.sendReply(reply);
         }
     }

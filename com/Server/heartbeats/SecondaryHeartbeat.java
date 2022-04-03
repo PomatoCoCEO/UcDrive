@@ -2,7 +2,7 @@ package com.Server.heartbeats;
 
 import java.net.DatagramSocket;
 
-import com.Server.Heartbeat;
+import com.Server.heartbeats.Heartbeat;
 import com.Server.config.ConfigServer;
 
 public class SecondaryHeartbeat extends Heartbeat {
@@ -16,17 +16,18 @@ public class SecondaryHeartbeat extends Heartbeat {
 
     public void run() {
         secondaryHeartbeat();
-        /* 
-        boolean sec_before = false;
-        while (true) {
-            if (primary) {
-                primary = primaryHeartbeat(sec_before);
-            } else {
-                primary = secondaryHeartbeat();
-                sec_before = true;
-
-            }
-        }*/
+        /*
+         * boolean sec_before = false;
+         * while (true) {
+         * if (primary) {
+         * primary = primaryHeartbeat(sec_before);
+         * } else {
+         * primary = secondaryHeartbeat();
+         * sec_before = true;
+         * 
+         * }
+         * }
+         */
     }
 
 }

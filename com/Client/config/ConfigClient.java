@@ -80,8 +80,6 @@ public class ConfigClient {
         } catch (FileNotFoundException f) {
             System.out.println("File not found: " + f.getMessage());
             f.printStackTrace();
-        } catch (IOException e) {
-            System.out.println("close:" + e.getMessage());
         }
     }
 

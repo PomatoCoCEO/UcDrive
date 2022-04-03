@@ -1,4 +1,4 @@
-package com.Server;
+package com.Server.udp;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.DataTransfer.threads.UDPTransfer;
+import com.Server.Server;
 
 public class UDPAccept extends Thread {
     private Server server;

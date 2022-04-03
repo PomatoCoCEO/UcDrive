@@ -1,4 +1,4 @@
-package com.Server;
+package com.Server.heartbeats;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

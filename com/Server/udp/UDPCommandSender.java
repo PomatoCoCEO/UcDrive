@@ -1,4 +1,4 @@
-package com.Server;
+package com.Server.udp;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -6,6 +6,7 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 
 import com.DataTransfer.props.Properties;
+import com.Server.Server;
 
 public class UDPCommandSender extends Thread {
     private Server server;

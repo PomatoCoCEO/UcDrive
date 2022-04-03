@@ -1,4 +1,4 @@
-package com.Server;
+package com.Server.udp;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.DataTransfer.props.Properties;
+import com.Server.Server;
 
 public class UDPCommandReceiver extends Thread {
 

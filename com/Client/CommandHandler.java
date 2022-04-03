@@ -78,7 +78,9 @@ public class CommandHandler {
                 String username = commandReader.nextLine();
                 System.out.println("Enter password:");
                 Console c = System.console();
-                String password = new String(c.readPassword());// commandReader.readLine();
+                String password;
+                if(c!=null) password= new String(c.readPassword());// commandReader.readLine();
+                else password = commandReader.nextLine();
                 Credentials cred = new Credentials(username, password);
                 Request login = new Request(cred.loginString(), "");
 
@@ -102,9 +104,6 @@ public class CommandHandler {
                 }
             } catch (SocketTimeoutException | SocketException e) {
                 throw e;
-            } catch (IOException e) {
-                System.out.println("Error while sending or reading login information");
-                e.printStackTrace();
             }
 
         }

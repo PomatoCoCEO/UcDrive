@@ -1,8 +1,9 @@
-package com.Server;
+package com.Server.tcp;
 
 import java.io.IOException;
 import java.net.Socket;
 
+import com.Server.Server;
 import com.Server.conn.ServerConnection;
 
 public class TCPAccept extends Thread {

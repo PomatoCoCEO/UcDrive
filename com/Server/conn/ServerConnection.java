@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.file.Path;
 
 import com.Server.CommandHandler;
@@ -40,8 +41,6 @@ public class ServerConnection extends Thread {
     }
 
     public void run() {
-        System.out.println("Entered run");
-
         CommandHandler commandHandler = new CommandHandler(this.socket, this);
 
         Request loginRequest;
@@ -51,9 +50,13 @@ public class ServerConnection extends Thread {
             e1.printStackTrace();
             return;
         }
+        try {
+            commandHandler.login(loginRequest);
+        } catch(SocketException se) {
+            se.printStackTrace();
+            return;
+        }
 
-        commandHandler.login(loginRequest);
-        System.out.println("Authentication successful! Let us continue!");
         while (true)
 
         {
@@ -124,11 +127,15 @@ public class ServerConnection extends Thread {
         return this.absolutePath;
     }
 
-    public void sendReply(Reply reply) {
+    public void sendReply(Reply reply) throws SocketException {
         try {
             out.writeObject(reply);
             out.flush();
-        } catch (IOException io) {
+        } catch(SocketException se) {
+            throw se;
+        }
+
+        catch (IOException io) {
             io.printStackTrace();
         }
     }

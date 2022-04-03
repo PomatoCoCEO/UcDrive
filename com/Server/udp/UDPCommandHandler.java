@@ -1,9 +1,10 @@
-package com.Server;
+package com.Server.udp;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
+import com.Server.Server;
 import com.Server.auth.User;
 import com.Server.auth.Auth.Operation;
 
