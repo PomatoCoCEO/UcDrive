@@ -38,16 +38,16 @@ public class Client {
             InetAddress nextTry;
             int prt;
             if (connectedToPrimary) {
-                System.out.println("I was connected to primary");
+                // System.out.println("I was connected to primary");
                 nextTry = sec;
                 prt = config.getSecondaryServerPort();
             } else {
-                System.out.println("I was connected to secondary");
+                // System.out.println("I was connected to secondary");
 
                 nextTry = prim;
                 prt = config.getPrimaryServerPort();
             }
-            System.out.println("trying to connect to " + nextTry + ":" + prt);
+            // System.out.println("trying to connect to " + nextTry + ":" + prt);
             Socket sock = new Socket(nextTry, prt);
             sock.setSoTimeout(Client.CLIENT_SOCKET_TIMEOUT_MILLISECONDS);
             ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
@@ -55,7 +55,7 @@ public class Client {
             ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
             cc.setSocketParams(sock, ois, oos);
             CommandHandler newHandler = new CommandHandler(cc, sock, nextTry, prt, config);
-            System.out.println("Is socket closed? " + sock.isClosed());
+            
             connectedToPrimary = !connectedToPrimary;
             System.out.println("Enter your credentials again");
             newHandler.login(commandReader);
@@ -96,27 +96,21 @@ public class Client {
             Scanner commandReader = new Scanner(System.in);
             String command = "";
             try {
-
-                System.out.println("Trying to connect to " + config.getPrimaryServerName() +
-                        " with port " + config.getPrimaryServerPort());
                 s = new Socket(config.getPrimaryServerName(), config.getPrimaryServerPort());
                 s.setSoTimeout(CLIENT_SOCKET_TIMEOUT_MILLISECONDS);
                 clientConnection = new ClientConnection(s, config);
-
-                System.out.println("SOCKET=" + s);
-
                 InetAddress add = InetAddress.getByName(config.getPrimaryServerName());
 
                 commandHandler = new CommandHandler(clientConnection, s, add, config.getPrimaryServerPort(), config);
 
                 commandHandler.login(commandReader);
             } catch (SocketException e) {
-                System.out.println("Switch 2: " + e.getMessage());
+                System.out.println("Problems: " + e.getMessage());
                 commandHandler = switchServer(commandHandler, clientConnection, commandReader);
             }
 
             if (commandHandler.getSocket() == null) {
-                System.out.println("Exiting client");
+                System.out.println("Exiting client..");
                 return;
             }
             System.out.println("Enter command: (help for more info)");
@@ -128,7 +122,6 @@ public class Client {
                         break;
 
                 } catch (SocketTimeoutException | SocketException e) {
-                    System.out.println("Switch 1");
                     commandQueue.add(command);
                     commandHandler = switchServer(commandHandler, clientConnection, commandReader);
                     if (commandHandler.getSocket() == null) {
@@ -136,9 +129,7 @@ public class Client {
                         break;
                     }
                 } catch (Exception e) {
-                    System.out.println("message:" + e.getMessage());
-                    e.printStackTrace();
-
+                    System.out.println("Problems:" + e.getMessage());
                     break;
                 }
             }
@@ -146,21 +137,22 @@ public class Client {
             System.out.println("Exiting client");
 
         } catch (UnknownHostException e) {
-            System.out.println("Sock:" + e.getMessage());
+            System.out.println("Impossible to connect:" + e.getMessage());
 
         } catch (IOException io) {
-            System.out.println(io.getMessage());
+            System.out.println("Problems: "+io.getMessage());
             io.printStackTrace();
         }
 
         finally {
             if (s != null) {
+                // aborts the connection with the server gracefully
                 try {
                     Request abort = new Request("ABORT", token);
                     clientConnection.sendRequest(abort);
                     s.close();
                 } catch (IOException e) {
-                    System.out.println("close:" + e.getMessage());
+                    System.out.println("Error closing connection:" + e.getMessage());
                 }
             }
         }

@@ -87,14 +87,13 @@ public class FileTransfer extends Thread {
                 for (int i = 0; i < digest.length; i++) {
                     result += Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1);
                 }
-                System.out.println("MD5 result: " + result);
+                
 
                 rep = new Reply(result, ResponseStatus.OK.getStatus());
                 oos.writeObject(rep);
                 oos.flush();
 
                 rep = (Reply) ois.readObject();
-                System.out.println("pos readobj: " + rep.getMessage());
 
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
             System.out.println("MD5 match");
@@ -118,14 +117,14 @@ public class FileTransfer extends Thread {
                 String fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/') + 1);
                 filePath = Paths.get(dirPath, fileNameWithoutDirectory).toString();
                 File myObj = new File(filePath);
-                if (myObj.createNewFile()) {
+                /*if (myObj.createNewFile()) {
                     System.out.println("File created: " + myObj.getName());
                 } else {
 
                     // ! give the file another name maybe
 
                     System.out.println("File already exists.");
-                }
+                }*/
                 FileOutputStream fos = new FileOutputStream(myObj);
                 MessageDigest md = MessageDigest.getInstance("MD5");
                 for (int i = 0; i < noBlocks; i++) {
@@ -149,7 +148,7 @@ public class FileTransfer extends Thread {
                 for (int i = 0; i < digest.length; i++) {
                     result += Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1);
                 }
-                System.out.println("MD5 result: " + result);
+                // System.out.println("MD5 result: " + result);
 
                 rep = (Reply) ois.readObject();
                 if (rep.getMessage().equals(result)) {
@@ -170,10 +169,10 @@ public class FileTransfer extends Thread {
             ois.close();
             oos.close();
         } catch (IOException e) {
-            System.out.println("An error occurred:");
+            System.out.println("An error occurred: "+e.getMessage());
             e.printStackTrace();
         } catch (ClassNotFoundException cnf) {
-            System.out.println("An error occurred:");
+            System.out.println("An error occurred: "+cnf.getMessage());
             cnf.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
             // TODO Auto-generated catch block

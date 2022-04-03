@@ -93,13 +93,7 @@ public class Heartbeat extends Thread {
                     // create Receive udp files
                 }
                 Thread.sleep(HEARTBEAT_SLEEP_MILLISECONDS);
-            } catch (SocketTimeoutException ste) {
-                if (isSecondary)
-                    System.out.println("Primary server not restored yet");
-                /*
-                 * else
-                 * System.out.println("Secondary server down");
-                 */
+            } catch (SocketTimeoutException ste) {    
                 noFailedHeartbeats++;
             } catch (IOException e) {
                 // TODO Auto-generated catch block

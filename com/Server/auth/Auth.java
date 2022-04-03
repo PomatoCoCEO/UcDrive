@@ -40,10 +40,10 @@ public class Auth {
                         users.add(u);
 
                         File f = new File(Paths.get(absolutePath, line1).toString());
-                        if (f.mkdir() == true) { // there is no directory with that name
-                            System.out.println("Directory has been created successfully " + line1);
+                        if (f.mkdir()) { // there is no directory with that name
+                            System.out.println("Directory created successfully: " + line1);
                         } else {
-                            System.out.println("Directory cannot be created (its already created) " + line1);
+                            System.out.println("Directory cannot be created (it already exists) " + line1);
                         }
 
                     }
@@ -84,8 +84,6 @@ public class Auth {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                System.out.println("changed");
-                System.out.println(user);
 
                 break;
             case ADD:

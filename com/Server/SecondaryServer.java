@@ -29,7 +29,7 @@ public class SecondaryServer extends Server {
             UDPCommandReceiver ucr = new UDPCommandReceiver(this);
             // here we should make another thread to accept the dup connections
             sh.join();
-            System.out.println("Secondary heartbeat joined.");
+            System.out.println("Secondary heartbeat over...");
             udpAccept.interrupt();
             ucr.interrupt();
             // after the server knows it will replace the primary server

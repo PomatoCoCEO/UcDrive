@@ -102,16 +102,13 @@ public class CommandHandler {
         serverConnection.constructAndSendReply("FILE EXISTS", ResponseStatus.OK.getStatus());
         // ? this section of code needs to remain here because the request should be
         // handled in a single thread
-        System.out.println("File exists sent");
         Request portNoReq = serverConnection.getRequest();
-        System.out.println("Got answer port no" + portNoReq);
         String[] msgPort = portNoReq.getMessage().split("\n");
         if (msgPort.length < 2 || !msgPort[0].equals("PORT")) {
             serverConnection.constructAndSendReply("Insufficient port information", "Bad Request");
             return;
         }
         int portNo = Integer.parseInt(msgPort[1]);
-        System.out.println("Got port: " + portNo);
 
         FileDownloadTask ftt = new FileDownloadTask(filePath.toString(), socket.getInetAddress(), portNo,
                 serverConnection);
@@ -128,14 +125,14 @@ public class CommandHandler {
 
     public void handleUpload() {
         try {
-            System.out.println("Handling upload"); // handles upload only once
+            System.out.println("Handling upload..."); // handles upload only once
             ServerSocket listenUploadSocket = new ServerSocket(0);
-            System.out.println("New port opened for file transfer: " + listenUploadSocket.getLocalPort());
+            // System.out.println("New port opened for file transfer: " + listenUploadSocket.getLocalPort());
             serverConnection.constructAndSendReply("PORT " + listenUploadSocket.getLocalPort(),
                     ResponseStatus.OK.getStatus());
             FileUploadTask fut = new FileUploadTask(serverConnection, listenUploadSocket);
             serverConnection.getServer().getQueueFileRcv().add(fut);
-            System.out.println("Added to quuuuuuuuuue");
+            // System.out.println("Added to quuuuuuuuuue");
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -182,12 +179,10 @@ public class CommandHandler {
 
     private void changePassword(Request request) throws SocketException {
         String[] sp = request.getMessage().split("\n");
-        System.out.println("Split");
         String newPassword = sp[1];
         User user = serverConnection.getUser();
         User userChanged = new User(user.getUsername(), newPassword, user.getServerDir(), user.getClientDir());
         serverConnection.getAuth().changeUsers(Operation.CHANGE, userChanged);
-        System.out.println("Changed");
         Reply reply = new Reply("Password changed!", ResponseStatus.OK.getStatus());
         serverConnection.sendReply(reply);
         String failOverChangePassword = "CH-PASS\n" + serverConnection.getUser().getUsername() + "\n" + newPassword;
@@ -199,13 +194,13 @@ public class CommandHandler {
         String[] sp = request.getMessage().split("\n", 2);
         String relativePath = "";
         // if it has no argument then we just get the user's last directory
-        System.out.println("Relative path: " + relativePath);
+        // System.out.println("Relative path: " + relativePath);
         if (sp.length >= 2) {
             // else we need to add a relative part to the path
             relativePath = sp[1];
         }
         String currentPath = serverConnection.getUser().getServerDir();
-        System.out.println("Current path : " + currentPath);
+        // System.out.println("Current path : " + currentPath);
         // ! we could do some verification here
         Path p = Paths.get(serverConnection.getAbsolutePath(), currentPath, relativePath);
         // ! we shall not share the internal structure of the server with the clients!!!

@@ -89,7 +89,7 @@ public class CommandHandler {
                 Reply reply = clientConnection.getReply();
                 switch (reply.getStatusCode()) {
                     case "OK":
-                        System.out.println("Login successful " + reply.getMessage());
+                        System.out.println("Login successful");
                         String server_data = reply.getMessage();
                         String[] data = server_data.split("\n");
                         Client.setToken(data[0]);
@@ -298,7 +298,7 @@ public class CommandHandler {
         Path p = Paths.get(clientDir);
         if (Files.exists(p) && Files.isDirectory(p)) {
             Client.setClientDir(clientDir);
-            System.out.println("new directory: " + clientDir);
+            System.out.println("New working directory: " + clientDir);
         } else {
             System.out.println("Error: directory not found");
         }
@@ -488,6 +488,8 @@ public class CommandHandler {
                 break;
             case "upload":
                 uploadFile(line);
+                break;
+            case "":
                 break;
             default:
                 System.out.println("Not a valid command");

@@ -28,7 +28,6 @@ public class ServerConnection extends Thread {
     private String absolutePath;
 
     public ServerConnection(Socket socket, Server server) throws IOException {
-
         System.out.println("New server connection");
         this.socket = socket;
         this.auth = server.getAuthInfo();
@@ -65,6 +64,7 @@ public class ServerConnection extends Thread {
                 if (this.socket != null) {
 
                     Request request = (Request) in.readObject();
+                    // for debugging purposes
                     System.out.println("Request: \"" + request + "\"");
                     commandHandler.handleRequest(request);
                 } else {
@@ -74,7 +74,7 @@ public class ServerConnection extends Thread {
             } catch (EOFException e) {
                 this.getUser().setToken("");
 
-                System.out.println("EOF:" + e);
+                System.out.println("EOF:" + e.getMessage());
                 try {
                     this.socket.close();
                 } catch (IOException e1) {

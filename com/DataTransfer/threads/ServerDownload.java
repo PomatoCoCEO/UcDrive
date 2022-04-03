@@ -92,13 +92,11 @@ public class ServerDownload extends Thread {
             long bytes = Files.size(absolutePath);
             long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE)
                     + (bytes % (FileTransfer.BLOCK_BYTE_SIZE) == 0 ? 0 : 1);
-            System.out.println();
             String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
                     .toString();
 
             Reply rep = new Reply("FILE\n" + filePath + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
                     ResponseStatus.OK.getStatus());
-            System.out.println("Sending reply with file metadata: " + rep);
             oos.writeObject(rep);
             oos.flush();
 
@@ -123,14 +121,12 @@ public class ServerDownload extends Thread {
                 for (int i = 0; i < digest.length; i++) {
                     result += Integer.toString((digest[i] & 0xff) + 0x100, 16).substring(1);
                 }
-                System.out.println("MD5 result: " + result);
 
                 rep = new Reply(result, ResponseStatus.OK.getStatus());
                 oos.writeObject(rep);
                 oos.flush();
 
                 rep = (Reply) ois.readObject();
-                System.out.println("pos readobj: " + rep.getMessage());
 
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
             System.out.println("MD5 match");

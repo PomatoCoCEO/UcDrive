@@ -12,13 +12,9 @@ public class FileTransferDownloadCreator extends Thread {
     }
 
     public void run() {
-        System.out.println("File Transfer tcp creator alive!");
         while(true) {
             try {
                 FileDownloadTask fdt = server.getQueueFileSend().take(); // waits until a new file arrives
-                System.out.println("Tirou da queue");
-
-
                 // ! create new download method
                 server.getThreadPoolFiles().execute(new ServerDownload(fdt));
             } catch (InterruptedException e) {

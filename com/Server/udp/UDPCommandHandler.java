@@ -63,8 +63,6 @@ public class UDPCommandHandler extends Thread {
         newUser.setServerDir(newDirectory);
 
         server.getAuthInfo().changeUsers(Operation.CHANGE, newUser);
-        User newUser2 = server.getAuthInfo().findUser(username);
-        System.out.println("New user info: " + newUser2);
         sendResponse("OK");
     }
 

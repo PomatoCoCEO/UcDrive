@@ -52,7 +52,6 @@ public class UDPTransfer extends Thread {
     }
 
     public void run() {
-        System.out.println("EXECUTING UDP TRANSFER");
         if (send)
             sendFile();
         else
@@ -130,7 +129,6 @@ public class UDPTransfer extends Thread {
             // change destination port
             byte[] reply = new byte[BLOCK_BYTE_SIZE];
             DatagramPacket dp = new DatagramPacket(reply, reply.length);
-            System.out.println("Trying to receive OK with port...");
             ds.receive(dp);
             destinationPort = dp.getPort();
 
@@ -182,7 +180,7 @@ public class UDPTransfer extends Thread {
             System.out.println("Udp transfer complete");
             dis.close();
         } catch (IOException io) {
-            System.out.println("Could not send to secondary Server");
+            System.out.println("Could not send to secondary Server: "+io.getMessage());
             io.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
             // TODO Auto-generated catch block
@@ -200,17 +198,16 @@ public class UDPTransfer extends Thread {
             DatagramSocket ds = new DatagramSocket();
             sendString(ds, "OK");
             ds.setSoTimeout(UDP_SOCKET_TIMEOUT);
-            System.out.println("Sent ok");
             String path = Paths.get(absolutePath, filePath).toString();
             File myObj = new File(path);
-            if (myObj.createNewFile()) {
+            /*if (myObj.createNewFile()) {
                 System.out.println("File created: " + myObj.getName());
             } else {
 
                 // ! give the file another name maybe
 
                 System.out.println("File already exists.");
-            }
+            }*/
             FileOutputStream fos = new FileOutputStream(myObj);
             MessageDigest md = MessageDigest.getInstance("MD5"), clone;
             byte[][] cache = new byte[NO_BLOCKS_TRANSFER][BLOCK_BYTE_SIZE];
@@ -252,8 +249,8 @@ public class UDPTransfer extends Thread {
                     blocksRead += Math.min(noBlocks - blocksRead, NO_BLOCKS_TRANSFER);
                 } else { // SENDS "ERROR MD5"
                     md = clone;
-                    System.out.println("Message: " + ans);
-                    System.out.println("Error in udp transfer, trying again");
+                    System.out.println("Error in udp transfer: " + ans);
+                    System.out.println("Trying again:");
                 }
 
             }
@@ -265,7 +262,7 @@ public class UDPTransfer extends Thread {
             System.out.println(filePath + " : transfer complete");
 
         } catch (IOException e) {
-            System.out.println("An error occurred:");
+            System.out.println("An error occurred: "+e.getMessage());
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
             // TODO Auto-generated catch block

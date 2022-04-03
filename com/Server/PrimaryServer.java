@@ -49,7 +49,6 @@ public class PrimaryServer extends Server {
 
                         // act like a secondary server
                         isCurrentlyPrimary = false;
-                        System.out.println("Sou secundario");
                         new SecondaryHeartbeat(ds, secondaryServerConfig);
                         // upd file update
                         break;
@@ -87,15 +86,12 @@ public class PrimaryServer extends Server {
                     UDPCommandReceiver ucr = new UDPCommandReceiver(this);
                     // here we should make another thread to accept the dup connections
                     sh.join();
-                    System.out.println("Pserver Secondary heartbeat joined.");
                     udpAccept.interrupt();
                     ucr.interrupt();
                     // after the server knows it will replace the primary server
-                    System.out.println("UDP transfer thread interrupted.");
+                    System.out.println("UDP transfer threads interrupted...");
                     // it should kill the file receipt thread
 
-                    // ! udpAccept won't die, so we need to fix this
-                    System.out.println("UDP transfer thread over.");
                     PrimaryHeartbeat ph = new PrimaryHeartbeat(ds, secondaryServerConfig, true);
                     bePrimary();
                     ph.join();

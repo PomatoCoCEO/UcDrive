@@ -91,16 +91,10 @@ public class Server {
         FileTransferDownloadCreator ftdc = new FileTransferDownloadCreator(this);
         FileTransferUdpCreator ftuc = new FileTransferUdpCreator(this);
 
-        System.out.println("Hello there!");
         Scanner sc = new Scanner(System.in);
         while (true) {
             String s = sc.nextLine();
-            if (s.equalsIgnoreCase("EXIT")) {
-                // ? we know that this should be given more care...
-                System.exit(1);
-            } else {
-                System.out.println("You typed: " + s);
-            }
+            System.out.println("You typed: " + s);
         }
     }
 

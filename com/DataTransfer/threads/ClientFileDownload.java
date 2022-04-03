@@ -60,7 +60,7 @@ public class ClientFileDownload extends Thread {
 
             Reply rep;
             Socket receiver = serverSocket.accept();
-            System.out.println("Receiver information: " + receiver.getLocalAddress() + ":" + receiver.getLocalPort());
+            // System.out.println("Receiver information: " + receiver.getLocalAddress() + ":" + receiver.getLocalPort());
             ObjectOutputStream oos = new ObjectOutputStream(receiver.getOutputStream());
             oos.flush();
             ObjectInputStream ois = new ObjectInputStream(receiver.getInputStream());
@@ -79,7 +79,7 @@ public class ClientFileDownload extends Thread {
             String fileName = fileDataSplit[1];
             long byteSize = Integer.parseInt(fileDataSplit[3]);
             long noBlocks = Integer.parseInt(fileDataSplit[5]);
-            System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", fileName, byteSize, noBlocks);
+            // System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", fileName, byteSize, noBlocks);
 
             String filePath;
             try {
@@ -90,22 +90,19 @@ public class ClientFileDownload extends Thread {
                     if (fileName.indexOf('\\') != -1)
                         fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('\\') + 1);
                     filePath = Paths.get(dirPath, fileNameWithoutDirectory).toString();
-                    System.out.println("Path to use: " + filePath);
+                    // System.out.println("Path to use: " + filePath);
                     File myObj = new File(filePath);
-                    if (myObj.createNewFile()) {
+                    /*if (myObj.createNewFile()) {
                         System.out.println("File created: " + myObj.getName());
                     } else {
-
                         // ! give the file another name maybe
-
                         System.out.println("File already exists.");
-                    }
+                    }*/
                     FileOutputStream fos = new FileOutputStream(myObj);
                     MessageDigest md = MessageDigest.getInstance("MD5");
                     for (int i = 0; i < noBlocks; i++) {
 
                         FileChunk chunk = (FileChunk) ois.readObject(); // it is tcp so it is always in order
-                        // ! we might need to cache this
                         fos.write(chunk.getBytes());
                         fos.flush();
 
@@ -115,7 +112,7 @@ public class ClientFileDownload extends Thread {
                     fos.close();
 
                     String result = calculateMD5(md);
-                    System.out.println("MD5 result: " + result);
+                    // System.out.println("MD5 result: " + result);
 
                     rep = (Reply) ois.readObject();
                     if (rep.getMessage().equals(result)) {
@@ -123,7 +120,7 @@ public class ClientFileDownload extends Thread {
                         rep = new Reply(result, ResponseStatus.OK.getStatus());
                     } else {
                         rep = new Reply("MD5 results do not match, trying again.", "Bad request");
-                        System.out.println(rep.getMessage());
+                        // System.out.println(rep.getMessage());
                         myObj.delete();
                     }
                     oos.writeObject(rep);
@@ -137,7 +134,7 @@ public class ClientFileDownload extends Thread {
                 if (fileName.indexOf('\\') != -1)
                     fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('\\') + 1);
                 String command = "download " + fileNameWithoutDirectory;
-                System.out.println("Adding command to the pool: " + command);
+                // System.out.println("Adding command to the pool: " + command);
                 Client.getCommandQueue().add(command);
                 System.out.println("An error occurred:");
                 e.printStackTrace();
@@ -146,13 +143,13 @@ public class ClientFileDownload extends Thread {
             ois.close();
             oos.close();
         } catch (IOException e) {
-            System.out.println("An error occurred:");
+            System.out.println("An error occurred: "+e.getMessage());
             e.printStackTrace();
         } catch (ClassNotFoundException cnf) {
-            System.out.println("An error occurred:");
+            System.out.println("An error occurred: "+cnf.getMessage());
             cnf.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
+            System.out.println("An error occurred: "+e.getMessage());
             e.printStackTrace();
         }
     }

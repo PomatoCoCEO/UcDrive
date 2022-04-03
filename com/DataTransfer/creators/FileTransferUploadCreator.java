@@ -12,11 +12,9 @@ public class FileTransferUploadCreator extends Thread {
     }
 
     public void run() {
-        System.out.println("File Transfer tcp creator alive!");
         while(true) {
             try {
                 FileUploadTask ftt = server.getQueueFileRcv().take(); // waits until a new file arrives
-                System.out.println("Tirou da queue");
                 server.getThreadPoolFiles().execute(new ServerUpload(ftt.getServerConnection(),ftt.getServerSocket()));
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block

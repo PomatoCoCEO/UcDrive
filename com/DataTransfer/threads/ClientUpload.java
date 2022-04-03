@@ -80,7 +80,6 @@ public class ClientUpload extends Thread {
             long bytes = Files.size(filePath);
             long noBlocks = bytes / (FileTransfer.BLOCK_BYTE_SIZE)
                     + (bytes % (FileTransfer.BLOCK_BYTE_SIZE) == 0 ? 0 : 1);
-            System.out.println();
 
             Reply rep = new Reply("FILE\n" + fileName + "\nSIZE\n" + bytes + "\nBLOCKS\n" + noBlocks,
                     ResponseStatus.OK.getStatus());
@@ -117,13 +116,11 @@ public class ClientUpload extends Thread {
                 oos.flush();
 
                 rep = (Reply) ois.readObject();
-                System.out.println("pos readobj: " + rep.getMessage());
 
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
             System.out.println("Upload completed");
         } catch (SocketTimeoutException | SocketException e) {
             String command = "upload " + fileName;
-            System.out.println("Adding command to the pool: " + command);
             Client.getCommandQueue().add(command);
             throw e;
         } catch (IOException e) {

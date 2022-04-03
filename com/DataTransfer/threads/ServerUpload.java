@@ -56,7 +56,7 @@ public class ServerUpload extends Thread {
             String fileName = fileDataSplit[1];
             long byteSize = Integer.parseInt(fileDataSplit[3]);
             long blockNumber = Integer.parseInt(fileDataSplit[5]);
-            System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", fileName, byteSize, blockNumber);
+            // System.out.printf("Name: %s, byteSize: %d, BlockNumber: %s\n", fileName, byteSize, blockNumber);
             String dirPath = Paths.get(serverConnection.getAbsolutePath(), serverConnection.getUser().getServerDir())
                     .toString();
             // ! use threadpool here
@@ -67,14 +67,13 @@ public class ServerUpload extends Thread {
                 fileNameWithoutDirectory = fileName.substring(fileName.lastIndexOf('/') + 1);
                 filePath = Paths.get(dirPath, fileNameWithoutDirectory).toString();
                 File myObj = new File(filePath);
-                if (myObj.createNewFile()) {
+                /* if (myObj.createNewFile()) {
                     System.out.println("File created: " + myObj.getName());
                 } else {
 
                     // ! give the file another name maybe
-
                     System.out.println("File already exists. Removing existing one");
-                }
+                }*/
                 FileOutputStream fos = new FileOutputStream(myObj);
                 MessageDigest md = MessageDigest.getInstance("MD5");
                 for (int i = 0; i < blockNumber; i++) {
@@ -113,7 +112,7 @@ public class ServerUpload extends Thread {
                 oos.flush();
             } while (!rep.getStatusCode().equals(ResponseStatus.OK.getStatus()));
             uploadSocket.close();
-            System.out.println(fileName + " : transfer complete. Now handling udp");
+            System.out.println(fileName + " : transfer to primary complete.");
 
             filePath = Paths.get(serverConnection.getUser().getServerDir(), fileNameWithoutDirectory).toString();
             
@@ -121,7 +120,6 @@ public class ServerUpload extends Thread {
                     byteSize, blockNumber, serverConnection.getAbsolutePath(), filePath, true,
                     serverConnection.getServer().getDestinationConfig().getServerAddress(),
                     serverConnection.getServer().getDestinationConfig().getUdpFileTransferPort());
-            System.out.println("adding uftt to queue ONCE");
             serverConnection.getServer().getQueueUdp().add(uftt);
         } catch (IOException e) {
             e.printStackTrace();
